@@ -6,10 +6,14 @@ import { groups } from "@/features/groups/server";
 import { GroupError, type GroupDetail } from "@/features/groups/service";
 import { groupIdSchema } from "@/features/groups/schema";
 import { GroupControls } from "@/features/groups/group-controls";
+import { expenses } from "@/features/expenses/server";
+import { ExpensePanel } from "@/features/expenses/expense-panel";
 export default async function GroupPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ groupId: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   await requireSession();
   const { groupId } = await params;
@@ -21,6 +25,10 @@ export default async function GroupPage({
     if (error instanceof GroupError && error.code === "NOT_FOUND") notFound();
     throw error;
   }
+  const query = await searchParams;
+  const page =
+    query.page && /^[1-9]\d{0,4}$/.test(query.page) ? Number(query.page) : 1;
+  const expensePage = await expenses.list({ groupId, page });
   return (
     <>
       <Link
@@ -40,6 +48,20 @@ export default async function GroupPage({
         {group.description || "Good company. A fresh chapter."}
       </p>
       <GroupControls group={group} />
+      <ExpensePanel group={group} items={expensePage.items} />
+      <nav
+        aria-label="Expense pages"
+        className="mt-6 flex justify-between text-sm"
+      >
+        {page > 1 ? (
+          <Link href={`?page=${page - 1}`}>← Previous</Link>
+        ) : (
+          <span />
+        )}
+        {expensePage.hasNext ? (
+          <Link href={`?page=${page + 1}`}>Next →</Link>
+        ) : null}
+      </nav>
     </>
   );
 }

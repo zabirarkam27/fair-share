@@ -27,6 +27,17 @@ try {
       `REVOKE UPDATE,DELETE,TRUNCATE ON TABLE activity FROM ${role}`,
     );
   }
+  const expenses = await client.query(
+    "SELECT to_regclass('public.expenses') present",
+  );
+  if (expenses.rows[0].present) {
+    await client.query(
+      `GRANT SELECT,INSERT,UPDATE ON TABLE expenses TO ${role}`,
+    );
+    await client.query(
+      `GRANT SELECT,INSERT,UPDATE,DELETE ON TABLE expense_splits TO ${role}`,
+    );
+  }
   console.log(
     `Scoped application table privileges granted to ${test ? "test" : "development"} runtime role.`,
   );

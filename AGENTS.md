@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # FairShare project rules
 
-The user-authored master development instructions received on 4 November 2026 govern this repository. The latest user approved Phase 2 as Group Management and Authorization (overriding the earlier phase numbering). This scope is implemented and verified in docs/PHASE_2_REPORT.md. Stop and await explicit approval before further work. No expenses, financial engine or settlements are approved. Before any future financial writer is enabled, add the mandatory zero-net-balance removal guard.
+The latest user explicitly approved Phase 3 only: pure financial split engine FIRST, then transactional expense management and UI. Test all critical split cases before the UI. Use BigInt poisha, integer basis points and positive integer weights. Keep balances and settlements out of scope. Add a conservative financial-involvement removal guard before enabling expense writes; do not strand inactive members through historical edits. Stop at the Phase 3 report and await approval.
 
 ## Approval workflow
 

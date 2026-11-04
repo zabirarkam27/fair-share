@@ -16,6 +16,8 @@ describe("Better Auth / Prisma schema compatibility", () => {
     expect(models.map((model) => model.name).sort()).toEqual([
       "Account",
       "Activity",
+      "Expense",
+      "ExpenseSplit",
       "Group",
       "GroupMember",
       "Session",

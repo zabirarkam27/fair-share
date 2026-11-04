@@ -315,8 +315,24 @@ export function createGroupService(
             "CONFLICT",
             "The group admin cannot be removed.",
           );
-        // No financial tables exist in this phase. A zero-balance ledger guard
-        // must be added here BEFORE expenses/settlements are enabled.
+        // Conservative until the balance engine is approved: do not strand
+        // anyone financially involved, even when expenses might offset.
+        const involved = await tx.expense.findFirst({
+          where: {
+            groupId,
+            deletedAt: null,
+            OR: [
+              { paidById: memberId },
+              { splits: { some: { userId: memberId, amount: { gt: 0n } } } },
+            ],
+          },
+          select: { id: true },
+        });
+        if (involved)
+          throw new GroupError(
+            "CONFLICT",
+            "This member is involved in an active expense and cannot be removed yet.",
+          );
         await tx.groupMember.update({
           where: { groupId_userId: { groupId, userId: memberId } },
           data: { status: "REMOVED", departedAt: new Date() },

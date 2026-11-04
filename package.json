@@ -10,6 +10,7 @@
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "test:integration": "node scripts/migrate.mjs --test && node scripts/test-integration.mjs",
+    "test:migrations": "node scripts/test-migrations.mjs",
     "db:setup-local": "node scripts/setup-local.mjs",
     "db:migrate": "node scripts/migrate.mjs",
     "db:migrate:test": "node scripts/migrate.mjs --test",

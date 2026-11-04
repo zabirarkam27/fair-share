@@ -1,4 +1,4 @@
-// Active scope: Better Auth + group management. Financial entities are not active.
+// Active scope: authentication, groups and expenses. No settlements or balances.
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -9,17 +9,18 @@ datasource db {
 }
 
 model User {
-  id            String    @id
+  id            String        @id
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String        @unique
+  emailVerified Boolean       @default(false)
   image         String?
-  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
+  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @db.Timestamptz(3)
   sessions      Session[]
   accounts      Account[]
   memberships   GroupMember[]
   activities    Activity[]
+
   @@map("user")
 }
 
@@ -33,6 +34,7 @@ model Session {
   userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@map("session")
 }
@@ -49,9 +51,10 @@ model Account {
   refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
   scope                 String?
   password              String?
-  createdAt             DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt             DateTime @updatedAt @db.Timestamptz(3)
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([providerId, accountId])
   @@index([userId])
   @@map("account")
@@ -64,6 +67,7 @@ model Verification {
   expiresAt  DateTime @db.Timestamptz(3)
   createdAt  DateTime @default(now()) @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
   @@index([identifier])
   @@map("verification")
 }
@@ -86,6 +90,16 @@ enum ActivityType {
   INVITE_REVOKED
   MEMBER_JOINED
   MEMBER_REMOVED
+  EXPENSE_CREATED
+  EXPENSE_UPDATED
+  EXPENSE_DELETED
+}
+
+enum SplitType {
+  EQUAL
+  EXACT
+  PERCENTAGE
+  SHARES
 }
 
 model Group {
@@ -98,21 +112,68 @@ model Group {
   deletedAt       DateTime?     @db.Timestamptz(3)
   members         GroupMember[]
   activities      Activity[]
+  expenses        Expense[]
+
   @@map("groups")
 }
 
 model GroupMember {
-  groupId    String       @db.Uuid
-  userId     String
-  role       GroupRole    @default(MEMBER)
-  status     MemberStatus @default(ACTIVE)
-  joinedAt   DateTime     @default(now()) @db.Timestamptz(3)
-  departedAt DateTime?    @db.Timestamptz(3)
-  group      Group        @relation(fields: [groupId], references: [id], onDelete: Restrict)
-  user       User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  groupId         String         @db.Uuid
+  userId          String
+  role            GroupRole      @default(MEMBER)
+  status          MemberStatus   @default(ACTIVE)
+  joinedAt        DateTime       @default(now()) @db.Timestamptz(3)
+  departedAt      DateTime?      @db.Timestamptz(3)
+  group           Group          @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  paidExpenses    Expense[]      @relation("Payer")
+  createdExpenses Expense[]      @relation("Creator")
+  splits          ExpenseSplit[]
+
   @@id([groupId, userId])
   @@index([userId, status, groupId])
   @@map("group_members")
+}
+
+model Expense {
+  id          String         @id @default(uuid()) @db.Uuid
+  groupId     String         @db.Uuid
+  description String         @db.VarChar(160)
+  amount      BigInt
+  date        DateTime       @db.Date
+  paidById    String
+  createdById String
+  splitType   SplitType
+  version     Int            @default(1)
+  requestKey  String         @db.Uuid
+  fingerprint String         @db.VarChar(64)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime       @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?      @db.Timestamptz(3)
+  group       Group          @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  payer       GroupMember    @relation("Payer", fields: [groupId, paidById], references: [groupId, userId], onDelete: Restrict)
+  creator     GroupMember    @relation("Creator", fields: [groupId, createdById], references: [groupId, userId], onDelete: Restrict)
+  splits      ExpenseSplit[]
+
+  @@unique([groupId, id])
+  @@unique([groupId, createdById, requestKey])
+  @@index([groupId, deletedAt, date, id])
+  @@index([groupId, paidById])
+  @@map("expenses")
+}
+
+model ExpenseSplit {
+  groupId    String      @db.Uuid
+  expenseId  String      @db.Uuid
+  userId     String
+  amount     BigInt
+  inputUnits BigInt?
+  expense    Expense     @relation(fields: [groupId, expenseId], references: [groupId, id], onDelete: Restrict)
+  member     GroupMember @relation(fields: [groupId, userId], references: [groupId, userId], onDelete: Restrict)
+
+  @@id([expenseId, userId])
+  @@index([groupId, userId])
+  @@map("expense_splits")
 }
 
 model Activity {
@@ -128,6 +189,7 @@ model Activity {
   createdAt     DateTime     @default(now()) @db.Timestamptz(3)
   group         Group        @relation(fields: [groupId], references: [id], onDelete: Restrict)
   actor         User         @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
   @@index([groupId, createdAt, id])
   @@map("activity")
 }
