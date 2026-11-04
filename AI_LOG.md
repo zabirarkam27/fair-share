@@ -1,5 +1,13 @@
 # Actual AI usage log (in progress)
 
+## Latest evidence — Phase 6 after explicit approval
+
+The user requested activity history and audit logging only. Codex reviewed the existing transactional events, consolidated writes behind a server-only allowlisted writer, added explicit membership and deletion snapshots, removed UI permission flags from new expense metadata, and added an independently authorized paginated history route. New metadata uses version 2; existing version 1 rows are not rewritten. No schema migration, dependency or subagent was added.
+
+Actual correction: the first integration run passed 122 tests and failed one pagination fixture before its assertions, because a reused SQL parameter was inferred as UUID and text. Added explicit casts without weakening pagination checks. The final run passes all 123 integration tests, including three financial edits followed by deletion, exact snapshot-chain preservation, same-timestamp pagination during a newer insert, group isolation, immutable grants, sensitive-field projection and audit-failure rollback. Unit results: 110 passed, including 6 new metadata tests. TypeScript, zero-warning ESLint, production build and all five clean-schema migrations pass.
+
+Browser verification on the isolated localhost:3200 test origin created a 100 BDT expense, edited it to 200 then 300, deleted it and viewed all four retained events. Both old/new comparisons and allocations were visible afterward. Mobile document width stayed within the viewport; the override was reset. The two disposable fixture accounts/group and temporary server were cleaned up; the existing user session was left intact. Code commit: ce08c91. Phases 5–6 remain local on the original branch, not pushed. Domain descriptions/names intentionally remain history; no automatic secret-redaction or database-owner tamper-proof claim is made. See docs/PHASE_6_REPORT.md; await approval.
+
 ## Latest evidence — Phase 5 after explicit approval
 
 First completed the user's single-branch request: safely fast-forwarded Phase 4 onto codex/phase-1-auth, pushed it, and removed only the fully consolidated Phase 4 branch. Then implemented only approved settlement suggestions/recording on the original branch. Codex authored a pure greedy planner, bounded exact zero-sum partition DP, independent replay checks, authorized snapshot reads, locked idempotent append-only recording/audit/recalculation and RHF/Zod dialogs. Suggestions never write settlements. No new packages or subagents were used.

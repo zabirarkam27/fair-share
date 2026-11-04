@@ -1,6 +1,6 @@
-# FairShare — Phase 5
+# FairShare — Phase 6
 
-Authentication, groups/authorization, four expense split methods, persisted balances, payment suggestions and completed-settlement recording. Money uses BigInt poisha. Suggestions do not change balances; recorded settlements do. Reversals remain unimplemented. The reference build remains at `reference/pre-phase1/` and checkpoint `519735d`; its database was not reset or imported.
+Authentication, groups/authorization, four expense split methods, persisted balances, settlement suggestions/recording and protected activity history. Money uses BigInt poisha. Suggestions do not change balances; recorded settlements do. Expense edits/deletion retain immutable old/new snapshots. Reversals remain unimplemented. The reference build remains at `reference/pre-phase1/` and checkpoint `519735d`; its database was not reset or imported.
 
 ## Stack
 
@@ -87,6 +87,14 @@ For up to 10 nonzero members whose individual balances fit the BDT 1,000,000 pay
 
 Sender, receiver or group admin can record an already-completed payment, including a partial amount, with bKash, Cash or Bank labels. The server locks the group, rechecks session membership/authority and current debt/credit, inserts the immutable settlement/audit atomically and recalculates balances. A scoped request key makes retries idempotent; changed payloads under an existing key conflict. This records a user's assertion that money was paid; it does not transfer funds or verify bank/bKash receipts. Distinct keys or people can still make duplicate real-world claims while debt remains; receiver confirmation/disputes and reversals remain future scope.
 
+## Activity history
+
+Use “View activity history” on a group page, or `/dashboard/groups/[groupId]/activity`. Active members can read only their own live groups. The read-only timeline shows actor, action, timestamp in Dhaka time, resource ID and previous/new values. Expense snapshots retain amounts, dates, payer/creator IDs, split methods, versions, original input units and saved allocations; deletion adds an explicit deletion marker while preserving earlier events. Joining/removal captures membership transitions. Settlement recording shares its transaction with the immutable audit insert.
+
+The history uses 25-event keyset pages ordered by timestamp and ID, backed by the existing index. The server rechecks membership and reads each page in a consistent transaction. No activity create/edit/delete endpoint or action is exposed. Runtime roles have SELECT/INSERT on audit storage and cannot UPDATE/DELETE/TRUNCATE it; group admins also have no audit-edit interface.
+
+New snapshots use metadata schema version 2 and explicit per-action allowlists. Legacy version 1 rows remain unchanged and are safely projected on read. Credentials, profile emails, invite tokens/hashes, request keys/fingerprints and UI permission flags are not copied or returned. Malformed/unknown-version metadata is hidden rather than rendered as raw JSON. User-written descriptions and names intentionally remain history; do not put secrets in them. Group soft deletion retains records but disables ordinary group/history access. See [Phase 6 results](docs/PHASE_6_REPORT.md).
+
 ## Demo accounts
 
 Local browser demonstrations use `rafi.phase1@example.test` / `FairSharePhase1!2026` (admin of The Dhanmondi flat) and `nusrat.phase2@example.test` / `FairSharePhase2!2026` (member). These are public local demonstration credentials, not production secrets. They are not seeded on a fresh install; use `/signup` to create an account and a group. The old rafi@fairshare.demo account belongs to the archived reference database.
@@ -120,8 +128,8 @@ Webpack is explicitly selected because this sandbox blocked Turbopack junction c
 
 ## Phase boundary and known limits
 
-Phases through settlement suggestions/recording are implemented. Reversals and further work await approval. All work uses the existing [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth) branch. Phases 1–4 are pushed; Phase 5 is verified and committed locally, awaiting review before publication. No deployment or assessment submission has occurred. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; all checks pass, and pg 9 requires compatibility review.
+Phases through activity history/audit logging are implemented. Reversals and further work await approval. All work uses the existing [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth) branch. Phases 1–4 are pushed; Phases 5–6 are verified and committed locally, awaiting review before publication. No deployment or assessment submission has occurred. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; all checks pass, and pg 9 requires compatibility review.
 
 ESLint 9.39.5 is retained for the declared peer ranges of Next 16.4.5's lint plugins; npm marks that ESLint line unsupported. ESLint 10 executed locally but produced transitive peer conflicts, so it was not left as an unsupported combination. Revisit the lint toolchain together when Next's plugins support it. shadcn is development tooling, not a runtime dependency; its transitive audit advisories are reported in the phase report. Do not apply npm's suggested major downgrade blindly.
 
-See [Phase 5 results](docs/PHASE_5_REPORT.md), [Phase 4 history](docs/PHASE_4_REPORT.md), [Phase 3 history](docs/PHASE_3_REPORT.md), [Phase 2 history](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.
+See [Phase 6 results](docs/PHASE_6_REPORT.md), [Phase 5 history](docs/PHASE_5_REPORT.md), [Phase 4 history](docs/PHASE_4_REPORT.md), [Phase 3 history](docs/PHASE_3_REPORT.md), [Phase 2 history](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.

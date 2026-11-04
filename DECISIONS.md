@@ -1,8 +1,10 @@
 # FairShare reviewed decisions
 
-Status: authentication, groups, expenses, balances, settlement suggestions and completed-payment recording are implemented through approved Phase 5. Reversal/dispute workflows remain proposed. Evidence: docs/PHASE_5_REPORT.md. Implementation differences: ARCHITECTURE.md.
+Status: authentication, groups, expenses, balances, settlements and protected activity history/audit logging are implemented through approved Phase 6. Reversal/dispute workflows remain proposed. Evidence: docs/PHASE_6_REPORT.md. Implementation differences: ARCHITECTURE.md.
 
 ## Technical choices
+
+Phase 6 audit policy: preserve append-only event snapshots, not references to mutable expense values. New per-action allowlists exclude auth/profile/invite/request-secret data and UI flags, while version 1 rows remain immutable and safely projected. Store actor ID/name, group ID, action, resource ID, timestamp and applicable before/after values within the domain transaction. Display history only after current active membership authorization. No user/admin audit-edit endpoint exists. User-entered domain descriptions remain retained history; soft deletion is not data erasure and the database owner still has maintenance authority.
 
 Use Next.js App Router with strict TypeScript and Node runtime. Server pages perform authorized reads; Server Actions perform mutations through feature services. Route Handlers serve Better Auth and only genuinely HTTP-oriented endpoints. A separate Express API would add deployment and session plumbing without improving this assessment.
 

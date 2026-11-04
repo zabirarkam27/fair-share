@@ -1,8 +1,10 @@
 # FairShare — critically reviewed architecture
 
-**Reviewed design; Phases 1–5 implemented through settlement suggestions and recording.** Reviewed 4 November 2026 (Asia/Dhaka). Initial draft: docs/architecture-initial.md. Evidence: docs/PHASE_1_REPORT.md through docs/PHASE_5_REPORT.md. Reversals below remain proposed. The user's phase numbering supersedes the original sequence. Further implementation requires explicit approval.
+**Reviewed design; Phases 1–6 implemented through activity history/audit logging.** Reviewed 4 November 2026 (Asia/Dhaka). Initial draft: docs/architecture-initial.md. Evidence: docs/PHASE_1_REPORT.md through docs/PHASE_6_REPORT.md. Reversals below remain proposed. The user's phase numbering supersedes the original sequence. Further implementation requires explicit approval.
 
 ## 1. Compatibility and observed runtime behavior
+
+Phase 6 adds no schema migration or dependency. The existing Activity columns and `(groupId,createdAt,id)` index support immutable snapshots and 25-row keyset history. One server-only writer projects per-action allowlists, writes schemaVersion 2 inside the caller's domain transaction, and never exposes an activity mutation action. The authorized read service independently verifies active membership/live group status, uses RepeatableRead and projects legacy version 1/new version 2 metadata; unknown or malformed metadata is hidden. Expense old/new amounts, inputs and allocations survive multiple edits/deletion. Membership transitions and settlement records are captured atomically. Runtime audit UPDATE/DELETE/TRUNCATE remains revoked. Historical actor names are stored snapshots; participant display names may be resolved from the scoped roster. See docs/PHASE_6_REPORT.md for evidence and retention/privacy limits.
 
 | Component | Selected version | Verification |
 | --- | --- | --- |

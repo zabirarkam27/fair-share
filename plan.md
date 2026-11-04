@@ -1,6 +1,6 @@
 # FairShare approval-gated plan
 
-Current status: **Phase 5 — Settlement Suggestions and Recording implemented and verified; awaiting explicit approval.** Work remains on `codex/phase-1-auth`; Phase 5 is committed locally and not pushed. Reversals and later phases remain unimplemented.
+Current status: **Phase 6 — Activity History and Audit Logging implemented and verified; awaiting explicit approval.** Work remains on `codex/phase-1-auth`; Phases 5–6 are committed locally and not pushed. Reversals and later phases remain unimplemented.
 
 ## Completed foundations
 
@@ -66,7 +66,19 @@ See docs/PHASE_2_REPORT.md for historical evidence. Leave, admin transfer and re
 - [x] 104 unit tests, 108 PostgreSQL integration tests, TypeScript, ESLint, production build and all five clean-schema migrations pass.
 - [x] Exact planner matches independent exhaustive search on 27 tiny ledgers; 1000 generated cases verify cleared balances.
 - [x] Browser partial 200 BDT and remaining 400 BDT recordings reduce 600→400→0; history labels and responsive form verified.
-- [ ] User reviews docs/PHASE_5_REPORT.md and explicitly approves further work/publication.
+- [x] User approved Phase 6 activity history and audit logging only; publication remains separate.
+
+## Phase 6 — completed approved scope
+
+- [x] All seven required event categories include group/actor/action/resource/timestamp and applicable snapshots.
+- [x] Central server-only metadata allowlists; versioned new snapshots and safe legacy projection.
+- [x] Complete old/new expense values and allocations survive three edits plus deletion.
+- [x] Membership before/after transitions and explicit deletion markers.
+- [x] Current-membership-authorized history route with consistent reads and stable 25-row keyset pages.
+- [x] Runtime audit immutability, no activity mutation endpoint, atomic domain/audit rollback.
+- [x] 110 unit tests, 123 PostgreSQL integration tests, TypeScript, ESLint, build and five clean-schema migrations pass.
+- [x] Browser confirms 100→200 and 200→300 snapshots remain after deletion; mobile layout contained.
+- [ ] User reviews docs/PHASE_6_REPORT.md and explicitly approves further work/publication.
 
 ## Future work — proposals, not authorization
 
