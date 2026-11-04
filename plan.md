@@ -1,6 +1,6 @@
 # FairShare approval-gated plan
 
-Current status: **Phase 6 — Activity History and Audit Logging implemented and verified; awaiting explicit approval.** Work remains on `codex/phase-1-auth`; Phases 5–6 are committed locally and not pushed. Reversals and later phases remain unimplemented.
+Current status: **Phase 7 — Dashboard and User Interface implemented and verified; awaiting explicit approval.** Work remains on `codex/phase-1-auth`; Phases 5–7 are committed locally and not pushed. Reversals and later phases remain unimplemented.
 
 ## Completed foundations
 
@@ -78,7 +78,20 @@ See docs/PHASE_2_REPORT.md for historical evidence. Leave, admin transfer and re
 - [x] Runtime audit immutability, no activity mutation endpoint, atomic domain/audit rollback.
 - [x] 110 unit tests, 123 PostgreSQL integration tests, TypeScript, ESLint, build and five clean-schema migrations pass.
 - [x] Browser confirms 100→200 and 200→300 snapshots remain after deletion; mobile layout contained.
-- [ ] User reviews docs/PHASE_6_REPORT.md and explicitly approves further work/publication.
+- [x] User approved Phase 7 dashboard/interface implementation only; publication remains separate.
+
+## Phase 7 — completed approved scope
+
+- [x] All 13 requested screens connected to real existing features.
+- [x] Dashboard owed/receivable totals, individual group balances, recent authorized activity and quick actions.
+- [x] Focused expense list/add/edit/detail, balances, settlement suggestions/history and settings routes.
+- [x] Equal/exact/percentage/shares inputs with read-only server preview; no browser financial engines.
+- [x] Saved allocations, session identity, membership/creator/admin boundaries and edit versions remain authoritative.
+- [x] Responsive desktop/mobile navigation, labelled controls, focus, loading/error/success/empty states and destructive confirmations.
+- [x] 110 unit tests, 137 PostgreSQL integration tests (14 new interface cases), TypeScript, zero-warning ESLint, production build and five clean-schema migrations pass.
+- [x] Browser all-method previews, percentage error, weighted save/exact edit, partial payment/history, invitation entry and mobile containment verified.
+- [x] Two disposable browser accounts/group and temporary server cleaned up; normal local app restored.
+- [ ] User reviews docs/PHASE_7_REPORT.md and explicitly approves further work/publication.
 
 ## Future work — proposals, not authorization
 

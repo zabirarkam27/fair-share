@@ -1,8 +1,10 @@
 # FairShare reviewed decisions
 
-Status: authentication, groups, expenses, balances, settlements and protected activity history/audit logging are implemented through approved Phase 6. Reversal/dispute workflows remain proposed. Evidence: docs/PHASE_6_REPORT.md. Implementation differences: ARCHITECTURE.md.
+Status: authentication, groups, expenses, balances, settlements, protected activity history/audit logging and the connected dashboard/interface are implemented through approved Phase 7. Reversal/dispute workflows remain proposed. Evidence: docs/PHASE_7_REPORT.md. Implementation differences: ARCHITECTURE.md.
 
 ## Technical choices
+
+Phase 7 UI policy: use focused group routes with shared accessible navigation and existing shadcn primitives. Keep all split/balance/payment-plan calculations on the server, including expense previews. Preview is read-only and independently authorized; saved allocations remain authoritative. Return server-derived payment form eligibility; submission still rechecks live ledger limits. Prefer explicit preview over background requests on every keystroke. No chart without meaningful data, fake action, new dependency or migration. The recent feed is bounded to eight authorized event headers; detailed history retains its own authorization and pagination.
 
 Phase 6 audit policy: preserve append-only event snapshots, not references to mutable expense values. New per-action allowlists exclude auth/profile/invite/request-secret data and UI flags, while version 1 rows remain immutable and safely projected. Store actor ID/name, group ID, action, resource ID, timestamp and applicable before/after values within the domain transaction. Display history only after current active membership authorization. No user/admin audit-edit endpoint exists. User-entered domain descriptions remain retained history; soft deletion is not data erasure and the database owner still has maintenance authority.
 

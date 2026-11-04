@@ -1,6 +1,6 @@
-# FairShare — Phase 6
+# FairShare — Phase 7
 
-Authentication, groups/authorization, four expense split methods, persisted balances, settlement suggestions/recording and protected activity history. Money uses BigInt poisha. Suggestions do not change balances; recorded settlements do. Expense edits/deletion retain immutable old/new snapshots. Reversals remain unimplemented. The reference build remains at `reference/pre-phase1/` and checkpoint `519735d`; its database was not reset or imported.
+Authentication, groups/authorization, four expense split methods, persisted balances, settlement suggestions/recording and protected activity history. Money uses BigInt poisha. Suggestions do not change balances; recorded settlements do. Expense edits/deletion retain immutable old/new snapshots. Phase 7 adds focused, responsive financial screens and a connected dashboard. Reversals remain unimplemented. The reference build remains at `reference/pre-phase1/` and checkpoint `519735d`; its database was not reset or imported.
 
 ## Stack
 
@@ -87,6 +87,16 @@ For up to 10 nonzero members whose individual balances fit the BDT 1,000,000 pay
 
 Sender, receiver or group admin can record an already-completed payment, including a partial amount, with bKash, Cash or Bank labels. The server locks the group, rechecks session membership/authority and current debt/credit, inserts the immutable settlement/audit atomically and recalculates balances. A scoped request key makes retries idempotent; changed payloads under an existing key conflict. This records a user's assertion that money was paid; it does not transfer funds or verify bank/bKash receipts. Distinct keys or people can still make duplicate real-world claims while debt remains; receiver confirmation/disputes and reversals remain future scope.
 
+## Dashboard and connected screens
+
+The protected dashboard shows server-calculated owed/receivable totals, individual group balances, the latest eight authorized activity events and quick actions. Create a group, choose a group for Add expense, or paste a same-origin invitation link at `/dashboard/join`.
+
+Inside `/dashboard/groups/[groupId]`, shared navigation connects the overview, expenses, balances, settlement suggestions, completed payment history, activity and settings. Expenses have dedicated list, add, detail and edit routes. Settings exposes the existing invitations, membership removal and confirmed deletion features; no unsupported rename/transfer/reversal controls are shown.
+
+Expense forms offer equal, exact BDT, percentage and weighted-share inputs. Preview split calls an independently authenticated server service with the same membership/financial validators as save. Editing previews also enforce creator/admin permissions and the current version. Preview never writes financial/audit records. No split, balance or payment-planning engine runs in the browser. New-expense previews may differ from final saved rounding ties by one poisha; the saved detail page is authoritative.
+
+Responsive layouts include labelled forms, keyboard focus, a mobile navigation sheet, pending/error/success/empty states and destructive confirmations. Wide balance tables and group navigation scroll inside their own containers. All currency uses the same BigInt-safe BDT formatter. See [Phase 7 verification](docs/PHASE_7_REPORT.md).
+
 ## Activity history
 
 Use “View activity history” on a group page, or `/dashboard/groups/[groupId]/activity`. Active members can read only their own live groups. The read-only timeline shows actor, action, timestamp in Dhaka time, resource ID and previous/new values. Expense snapshots retain amounts, dates, payer/creator IDs, split methods, versions, original input units and saved allocations; deletion adds an explicit deletion marker while preserving earlier events. Joining/removal captures membership transitions. Settlement recording shares its transaction with the immutable audit insert.
@@ -128,8 +138,8 @@ Webpack is explicitly selected because this sandbox blocked Turbopack junction c
 
 ## Phase boundary and known limits
 
-Phases through activity history/audit logging are implemented. Reversals and further work await approval. All work uses the existing [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth) branch. Phases 1–4 are pushed; Phases 5–6 are verified and committed locally, awaiting review before publication. No deployment or assessment submission has occurred. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; all checks pass, and pg 9 requires compatibility review.
+Phases through the dashboard and connected interface are implemented. Reversals and further work await approval. All work uses the existing [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth) branch. Phases 1–4 are pushed; Phases 5–7 are verified and committed locally, awaiting review before publication. No deployment or assessment submission has occurred. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; all checks pass, and pg 9 requires compatibility review.
 
 ESLint 9.39.5 is retained for the declared peer ranges of Next 16.4.5's lint plugins; npm marks that ESLint line unsupported. ESLint 10 executed locally but produced transitive peer conflicts, so it was not left as an unsupported combination. Revisit the lint toolchain together when Next's plugins support it. shadcn is development tooling, not a runtime dependency; its transitive audit advisories are reported in the phase report. Do not apply npm's suggested major downgrade blindly.
 
-See [Phase 6 results](docs/PHASE_6_REPORT.md), [Phase 5 history](docs/PHASE_5_REPORT.md), [Phase 4 history](docs/PHASE_4_REPORT.md), [Phase 3 history](docs/PHASE_3_REPORT.md), [Phase 2 history](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.
+See [Phase 7 results](docs/PHASE_7_REPORT.md), [Phase 6 history](docs/PHASE_6_REPORT.md), [Phase 5 history](docs/PHASE_5_REPORT.md), [Phase 4 history](docs/PHASE_4_REPORT.md), [Phase 3 history](docs/PHASE_3_REPORT.md), [Phase 2 history](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.
