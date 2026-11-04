@@ -6,6 +6,7 @@ import { readLedgerSnapshots } from "@/features/balances/ledger";
 import { parsePoisha, MoneyError } from "@/features/expenses/money";
 import { suggestPayments } from "./engine";
 import { recordSettlementSchema } from "./schema";
+import { writeActivity } from "@/features/activity/audit";
 type Identity = { user: { id: string; name: string } };
 export function createSettlementService(
   db: PrismaClient,
@@ -175,20 +176,20 @@ export function createSettlementService(
                 requestKey: data.requestKey,
               },
             });
-            await tx.activity.create({
-              data: {
-                groupId: data.groupId,
-                actorId: user.id,
-                actorName: user.name,
-                type: "SETTLEMENT_RECORDED",
-                entityId: record.id,
-                after: {
-                  fromId: record.fromId,
-                  toId: record.toId,
-                  amountPoisha: record.amount.toString(),
-                  method: record.method,
-                  createdById: user.id,
-                },
+            await writeActivity(tx, {
+              groupId: data.groupId,
+              actor: user,
+              action: "SETTLEMENT_RECORDED",
+              resourceId: record.id,
+              after: {
+                id: record.id,
+                groupId: record.groupId,
+                createdAt: record.createdAt.toISOString(),
+                fromId: record.fromId,
+                toId: record.toId,
+                amountPoisha: record.amount.toString(),
+                method: record.method,
+                createdById: user.id,
               },
             });
           }

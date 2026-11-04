@@ -9,6 +9,7 @@ import {
 } from "./schema";
 import { newInvitation, hashInviteToken, INVITE_LIFETIME_MS } from "./invites";
 import { readLedgerSnapshots } from "@/features/balances/ledger";
+import { writeActivity } from "@/features/activity/audit";
 
 type Identity = { user: { id: string; name: string } };
 type SessionResolver = () => Promise<Identity | null>;
@@ -75,17 +76,16 @@ export function createGroupService(
     user: Identity["user"],
     type: Prisma.ActivityCreateInput["type"],
     entityId: string,
-    after?: Prisma.InputJsonValue,
+    after?: unknown,
+    before?: unknown,
   ) {
-    await tx.activity.create({
-      data: {
-        groupId,
-        actorId: user.id,
-        actorName: user.name,
-        type,
-        entityId,
-        ...(after ? { after } : {}),
-      },
+    await writeActivity(tx, {
+      groupId,
+      actor: user,
+      action: type,
+      resourceId: entityId,
+      before,
+      after,
     });
   }
   return {
@@ -230,9 +230,24 @@ export function createGroupService(
             inviteExpiresAt: expiresAt,
           },
         });
-        await event(tx, groupId, user, "INVITE_ROTATED", groupId, {
-          expiresAt: expiresAt.toISOString(),
-        });
+        await event(
+          tx,
+          groupId,
+          user,
+          "INVITE_ROTATED",
+          groupId,
+          {
+            active: true,
+            expiresAt: expiresAt.toISOString(),
+          },
+          {
+            active:
+              !!member.group.inviteTokenHash &&
+              !!member.group.inviteExpiresAt &&
+              member.group.inviteExpiresAt.getTime() > Date.now(),
+            expiresAt: member.group.inviteExpiresAt?.toISOString() ?? null,
+          },
+        );
         return { token: invitation.token, expiresAt: expiresAt.toISOString() };
       }, writeOptions);
     },
@@ -246,7 +261,21 @@ export function createGroupService(
           where: { id: groupId },
           data: { inviteTokenHash: null, inviteExpiresAt: null },
         });
-        await event(tx, groupId, user, "INVITE_REVOKED", groupId);
+        await event(
+          tx,
+          groupId,
+          user,
+          "INVITE_REVOKED",
+          groupId,
+          { active: false, expiresAt: null },
+          {
+            active:
+              !!member.group.inviteTokenHash &&
+              !!member.group.inviteExpiresAt &&
+              member.group.inviteExpiresAt.getTime() > Date.now(),
+            expiresAt: member.group.inviteExpiresAt?.toISOString() ?? null,
+          },
+        );
         return { success: true as const };
       }, writeOptions);
     },
@@ -287,7 +316,7 @@ export function createGroupService(
             "CONFLICT",
             "This group has reached its member limit.",
           );
-        await tx.groupMember.upsert({
+        const joined = await tx.groupMember.upsert({
           where: { groupId_userId: { groupId: group.id, userId: user.id } },
           create: { groupId: group.id, userId: user.id, role: "MEMBER" },
           update: {
@@ -296,8 +325,33 @@ export function createGroupService(
             departedAt: null,
             joinedAt: new Date(),
           },
+          include: { user: { select: { name: true } } },
         });
-        await event(tx, group.id, user, "MEMBER_JOINED", user.id);
+        await event(
+          tx,
+          group.id,
+          user,
+          "MEMBER_JOINED",
+          user.id,
+          {
+            memberId: user.id,
+            name: joined.user.name,
+            role: joined.role,
+            status: joined.status,
+            joinedAt: joined.joinedAt.toISOString(),
+            departedAt: joined.departedAt?.toISOString() ?? null,
+          },
+          existing
+            ? {
+                memberId: existing.userId,
+                name: joined.user.name,
+                role: existing.role,
+                status: existing.status,
+                joinedAt: existing.joinedAt.toISOString(),
+                departedAt: existing.departedAt?.toISOString() ?? null,
+              }
+            : undefined,
+        );
         return { id: group.id };
       }, writeOptions);
     },
@@ -309,6 +363,7 @@ export function createGroupService(
         admin(member.role);
         const target = await tx.groupMember.findUnique({
           where: { groupId_userId: { groupId, userId: memberId } },
+          include: { user: { select: { name: true } } },
         });
         if (!target || target.status !== "ACTIVE") throw unavailable();
         if (target.role === "ADMIN")
@@ -326,13 +381,33 @@ export function createGroupService(
             "CONFLICT",
             "This member must have a zero balance before removal.",
           );
-        await tx.groupMember.update({
+        const removed = await tx.groupMember.update({
           where: { groupId_userId: { groupId, userId: memberId } },
           data: { status: "REMOVED", departedAt: new Date() },
         });
-        await event(tx, groupId, user, "MEMBER_REMOVED", memberId, {
+        await event(
+          tx,
+          groupId,
+          user,
+          "MEMBER_REMOVED",
           memberId,
-        });
+          {
+            memberId,
+            name: target.user.name,
+            role: removed.role,
+            status: removed.status,
+            joinedAt: removed.joinedAt.toISOString(),
+            departedAt: removed.departedAt?.toISOString() ?? null,
+          },
+          {
+            memberId,
+            name: target.user.name,
+            role: target.role,
+            status: target.status,
+            joinedAt: target.joinedAt.toISOString(),
+            departedAt: target.departedAt?.toISOString() ?? null,
+          },
+        );
         return { success: true as const };
       }, writeOptions);
     },
@@ -347,7 +422,7 @@ export function createGroupService(
             "CONFLICT",
             "Type the exact group name to confirm.",
           );
-        await tx.group.update({
+        const deleted = await tx.group.update({
           where: { id: groupId },
           data: {
             deletedAt: new Date(),
@@ -355,9 +430,23 @@ export function createGroupService(
             inviteExpiresAt: null,
           },
         });
-        await event(tx, groupId, user, "GROUP_DELETED", groupId, {
-          name: member.group.name,
-        });
+        await event(
+          tx,
+          groupId,
+          user,
+          "GROUP_DELETED",
+          groupId,
+          {
+            name: deleted.name,
+            description: deleted.description,
+            deletedAt: deleted.deletedAt!.toISOString(),
+          },
+          {
+            name: member.group.name,
+            description: member.group.description,
+            deletedAt: null,
+          },
+        );
         return { success: true as const };
       }, writeOptions);
     },

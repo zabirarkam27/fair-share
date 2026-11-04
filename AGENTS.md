@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # FairShare project rules
 
-The latest user approved Phase 5 only: settlement suggestions and recording using the existing balance engine. Suggestions never affect balances. Implement deterministic greedy matching, and bounded exact optimization for small groups where practical, with truthful threshold/complexity labels. Record only active same-group debtor-to-creditor payments within both outstanding balances, using session-derived involved-party/admin authorization, a group lock, transaction, scoped idempotency key and immutable audit. bKash/Cash/Bank labels. Keep reversal workflows out of scope. Work on the original branch, test critical behavior before committing, then report and wait for explicit approval. Do not push unverified Phase 5 work.
+The latest user approved Phase 6 only: Activity History and Audit Logging for group creation, joining/removal, expense creation/edit/deletion and settlement recording. Preserve immutable old/new snapshots across multiple expense edits and deletion. Every read must authorize current group membership. Sanitize metadata through explicit allowlists; do not expose credentials, tokens, emails or request fingerprints. Related domain/audit records commit atomically. Retain existing audit rows and support legacy metadata safely. Use the existing branch, run checks before meaningful local commits, report actual results and wait for explicit approval. Keep reversal/new-phase workflows and publication out of this implementation scope.
 
 ## Approval workflow
 

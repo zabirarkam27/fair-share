@@ -50,6 +50,12 @@ export default async function GroupPage({
         {group.description || "Good company. A fresh chapter."}
       </p>
       <GroupControls group={group} />
+      <Link
+        href={`/dashboard/groups/${groupId}/activity`}
+        className="mt-6 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
+      >
+        View activity history →
+      </Link>
       <GroupBalances groupId={groupId} />
       <SettlementSection groupId={groupId} />
       <ExpensePanel group={group} items={expensePage.items} />

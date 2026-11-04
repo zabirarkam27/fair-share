@@ -12,6 +12,7 @@ import {
 } from "./schema";
 import { calculateExpense } from "./calculate";
 import { MoneyError } from "./money";
+import { writeActivity } from "@/features/activity/audit";
 
 type Identity = { user: { id: string; name: string } };
 type Tx = Prisma.TransactionClient;
@@ -26,6 +27,27 @@ const selection = {
   creator: { select: { user: { select: { name: true } } } },
 };
 type Row = Prisma.ExpenseGetPayload<{ include: typeof selection }>;
+function auditSnapshot(e: Row) {
+  return {
+    id: e.id,
+    groupId: e.groupId,
+    description: e.description,
+    amountPoisha: e.amount.toString(),
+    date: e.date.toISOString().slice(0, 10),
+    paidById: e.paidById,
+    payerName: e.payer.user.name,
+    createdById: e.createdById,
+    creatorName: e.creator.user.name,
+    splitType: e.splitType,
+    version: e.version,
+    deletedAt: e.deletedAt?.toISOString() ?? null,
+    splits: e.splits.map((s) => ({
+      userId: s.userId,
+      amountPoisha: s.amount.toString(),
+      inputUnits: s.inputUnits?.toString() ?? null,
+    })),
+  };
+}
 function dto(e: Row, actorId: string, role: string) {
   return {
     id: e.id,
@@ -141,20 +163,16 @@ export function createExpenseService(
     tx: Tx,
     user: Identity["user"],
     type: "EXPENSE_CREATED" | "EXPENSE_UPDATED" | "EXPENSE_DELETED",
-    after: ReturnType<typeof dto>,
-    before?: ReturnType<typeof dto>,
+    after: Row,
+    before?: Row,
   ) {
-    // Snapshots contain decimal integer strings, never BigInt JSON values.
-    await tx.activity.create({
-      data: {
-        groupId: after.groupId,
-        actorId: user.id,
-        actorName: user.name,
-        type,
-        entityId: after.id,
-        after,
-        ...(before ? { before } : {}),
-      },
+    await writeActivity(tx, {
+      groupId: after.groupId,
+      actor: user,
+      action: type,
+      resourceId: after.id,
+      after: auditSnapshot(after),
+      ...(before ? { before: auditSnapshot(before) } : {}),
     });
   }
   return {
@@ -215,7 +233,7 @@ export function createExpenseService(
         });
         const e = await find(tx, data.groupId, id);
         const result = dto(e, user.id, member.role);
-        await audit(tx, user, "EXPENSE_CREATED", result);
+        await audit(tx, user, "EXPENSE_CREATED", e);
         return result;
       }, options);
     },
@@ -283,13 +301,7 @@ export function createExpenseService(
         });
         const e = await find(tx, data.groupId, old.id);
         const result = dto(e, user.id, member.role);
-        await audit(
-          tx,
-          user,
-          "EXPENSE_UPDATED",
-          result,
-          dto(old, user.id, member.role),
-        );
+        await audit(tx, user, "EXPENSE_UPDATED", e, old);
         return result;
       }, options);
     },
@@ -315,17 +327,12 @@ export function createExpenseService(
           throw new MoneyError(
             "Deleting this expense would change an inactive member's financial contribution.",
           );
-        await tx.expense.update({
+        const deleted = await tx.expense.update({
           where: { id: old.id },
           data: { deletedAt: new Date(), version: { increment: 1 } },
+          include: selection,
         });
-        await audit(
-          tx,
-          user,
-          "EXPENSE_DELETED",
-          { ...dto(old, user.id, member.role), version: old.version + 1 },
-          dto(old, user.id, member.role),
-        );
+        await audit(tx, user, "EXPENSE_DELETED", deleted, old);
         return { success: true as const };
       }, options);
     },
