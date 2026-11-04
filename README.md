@@ -1,6 +1,6 @@
-# FairShare — Phase 2
+# FairShare — Phase 3
 
-Authentication, responsive application shell, and group management/authorization. Create/list/view groups, invite members with hashed expiring links, and use admin-only removal/deletion. Expense/payment features are **not active**. The earlier implementation is preserved at `reference/pre-phase1/` and Git checkpoint `519735d`; its database was not reset or imported.
+Authentication, responsive shell, groups/authorization and expense management with four exact split methods. Expense calculations use BigInt poisha and server-authoritative allocations. Balances and settlements are **not active**. The earlier implementation is preserved at `reference/pre-phase1/` and Git checkpoint `519735d`; its database was not reset or imported.
 
 ## Stack
 
@@ -41,7 +41,7 @@ Copy `.env.example` to `.env.local` and supply real, separately provisioned URLs
 | BETTER_AUTH_SECRET | Cryptographically random secret, at least 32 characters |
 | BETTER_AUTH_URL | Exact trusted origin; local http://127.0.0.1:3000 |
 
-Migration commands use Prisma `migrate deploy`; they do not reset a database. The initial migration creates User/Session/Account/Verification; the additive Phase 2 migration adds Group/GroupMember/Activity with scoped runtime grants and indexes. Financial entities remain an inactive proposal in `prisma/schema.proposal.prisma`.
+Migration commands use Prisma `migrate deploy`; they do not reset a database. Three migrations add auth, groups/memberships/activity, then expenses/splits, with scoped runtime grants. Settlement entities in `prisma/schema.proposal.prisma` remain an inactive reference; do not replace the applied schema with that file.
 
 ## Authentication and routes
 
@@ -61,7 +61,15 @@ Passwords are hashed/verified by Better Auth. No custom password algorithm, sess
 
 Invites expire in seven days, contain 32 random bytes and are stored only as SHA-256 hashes. Copy the raw link when generated; it cannot be retrieved later. `/join/[token]` provides no private group preview and never joins on GET. Signin/signup returns to the invitation, then acceptance checks it again under a group-row lock. Duplicate joins are idempotent. Removed members cannot return through a generic invitation. No client actor ID or role is trusted.
 
-There is no expense ledger yet. Removal must receive a zero-balance guard before future financial writes are enabled. Leave/reactivation/role-transfer UI and shared invitation throttling are not included in this phase. See the Phase 2 report for security tests and deployment limits.
+Until balances are approved, removal conservatively rejects a member who pays any live expense or receives a positive allocation in one. Offsetting expenses still block removal. Inactive history remains, and corrections cannot change an inactive member's financial contribution. Leave/reactivation/role-transfer UI and shared invitation throttling remain deferred.
+
+## Expenses and exact splits
+
+Group pages list expenses in pages of 25, show saved allocations and provide add/edit/delete dialogs with live previews. Members may add expenses; the original creator and group admin may edit/delete. Every server operation independently authenticates and checks group membership. An active group payer may be excluded from participants.
+
+Enter BDT as digit strings with at most two decimal places. The server parses them into integer poisha; totals must be ৳0.01–৳1,000,000.00. Exact inputs must sum to the total. Percentages use basis points (50.25% = 5025; total 10000). Share weights are positive integers up to 1,000,000. Largest remainders receive extra poisha; equal remainders use sorted member IDs and a stable expense-ID rotation. New-expense previews disclose that tied recipients can differ by one poisha when saved; edits preserve the ID.
+
+PostgreSQL amounts are BIGINT poisha. Result DTOs/audit snapshots use `amountPoisha` integer strings. `inputUnits` retains exact poisha, basis points or weights; equal splits use null. Creates/splits/audit writes are atomic. Create retries use scoped request keys; edits/deletes require the current version. Deletion retains expenses, splits and history. See [Phase 3 results](docs/PHASE_3_REPORT.md).
 
 ## Demo accounts
 
@@ -76,11 +84,14 @@ npm run lint
 npm test
 npm run build
 npm run test:integration
+npm run test:migrations
 ```
 
 Integration tests require a completed production build. They migrate only fairshare_test, start a separately owned Next server on 127.0.0.1:3100 with test runtime credentials, exercise real HTTP authentication/protected routes, then stop that server. They fail on missing/nonallowlisted/shared DB URLs and clean up only their UUID-namespaced accounts. Auth writes really commit; SQLite and outer rollback wrappers do not substitute for this test. Do not run against production. Keep port 3100 available.
 
 The test maintenance role is intentionally able to expire/delete its own test fixtures; the runtime role cannot create schema objects. Test credential isolation and pg_hba checks do not rely merely on different passwords in otherwise identical URLs.
+
+`test:migrations` applies all migrations in a new UUID-named empty schema inside the allowlisted test database, verifies completion, then drops only that generated schema. It never resets public, development or production storage.
 
 For production serving locally:
 
@@ -93,8 +104,8 @@ Webpack is explicitly selected because this sandbox blocked Turbopack junction c
 
 ## Phase boundary and known limits
 
-Groups and authorization are implemented; balances, expense splitting and settlement flows are not. No deployment, GitHub publication or assessment submission has been performed. Email verification, password recovery and distributed abuse protection are not configured; do not call this production-ready. Better Auth's in-memory HTTP rate limits are not a shared limiter and are not claimed to cover direct Server Action calls.
+Groups, expenses and all four split methods are implemented; balances and settlements are not. No deployment, GitHub publication or assessment submission has been performed. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP rate limits are not a shared limiter or claimed to cover direct Server Action calls. Current pg 8 emits a deprecation warning from Prisma adapter transaction relation queries; all checks pass, and pg 9 requires compatibility review.
 
 ESLint 9.39.5 is retained for the declared peer ranges of Next 16.4.5's lint plugins; npm marks that ESLint line unsupported. ESLint 10 executed locally but produced transitive peer conflicts, so it was not left as an unsupported combination. Revisit the lint toolchain together when Next's plugins support it. shadcn is development tooling, not a runtime dependency; its transitive audit advisories are reported in the phase report. Do not apply npm's suggested major downgrade blindly.
 
-See [Phase 2 results](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.
+See [Phase 3 results](docs/PHASE_3_REPORT.md), [Phase 2 history](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.

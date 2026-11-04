@@ -1,5 +1,13 @@
 # Actual AI usage log (in progress)
 
+## Latest evidence — Phase 3 after explicit approval
+
+The user required the pure split engine and critical tests before UI, and expressly excluded balances. Codex implemented BigInt codecs and independent equal/exact/percentage/shares functions first; 42 focused tests passed before persistence/UI work. It then added the expense/split migration, authenticated creator/admin services/actions, transaction/audit history, retries/versions and RHF/Zod responsive forms. No subagents were used or new packages installed.
+
+Actual corrections: TypeScript caught Vitest array-row spreading in invalid-member tests; object rows now exercise the intended arrays. The first PostgreSQL run exposed Prisma nested composite-relation validation errors (19 expense failures, 38 passing tests). Explicit split writes inside the transaction fixed them. Review removed a duplicate currency prefix and named DTO money amountPoisha. A traced pg deprecation warning originates in Prisma adapter relation queries and remains documented without suppression.
+
+Final evidence: 60 unit tests (43 split/codec, with 2,000 generated scenarios across four methods), 59 PostgreSQL integration tests (25 expense, 20 group, 14 auth), TypeScript, zero-warning ESLint, production build and all three migrations from an empty isolated schema pass. Browser checks on separate localhost:3200 test storage exercised all four methods, edit/delete, precision rejection, excluded payer and mobile layout. The three browser accounts/group were cleaned up; the existing user session was not changed. Conservative removal blocks live payer/positive-allocation involvement until balances are approved; inactive-history corrections preserve contribution. See docs/PHASE_3_REPORT.md. No balance/settlement implementation, publication or candidate-authorship claims were added. Await approval.
+
 This log describes this Codex session. It is not a claim that the candidate independently wrote or reviewed the code. The assessment requires the candidate to understand and explain their submission.
 
 ## Setup

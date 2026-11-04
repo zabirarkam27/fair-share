@@ -1,14 +1,14 @@
 # FairShare reviewed decisions
 
-Status: authentication and group management/authorization are implemented under explicit Phase 1/Phase 2 approval. Financial rules below remain the proposed target for a later approved phase. Current group scope/evidence is in docs/PHASE_2_REPORT.md; no active ledger exists, and its mandatory balance-removal guard must be added before financial writes are enabled. Implementation differences are recorded in ARCHITECTURE.md.
+Status: authentication, groups, expenses and four split methods are implemented under approval through Phase 3. Balance/settlement rules below remain a future target. Evidence: docs/PHASE_3_REPORT.md. Implementation differences: ARCHITECTURE.md.
 
 ## Technical choices
 
 Use Next.js App Router with strict TypeScript and Node runtime. Server pages perform authorized reads; Server Actions perform mutations through feature services. Route Handlers serve Better Auth and only genuinely HTTP-oriented endpoints. A separate Express API would add deployment and session plumbing without improving this assessment.
 
-Use PostgreSQL + Prisma, replacing the existing Drizzle adapter/schema only after approval. Normalize expense allocations into ExpenseSplit rows. Group membership/resource composite foreign keys reduce the chance of cross-group references. Transactions cover every financial mutation and its immutable audit event. Lock the group row consistently for membership, expenses and settlements.
+PostgreSQL + Prisma now replace the archived Drizzle implementation under explicit approval. Expense allocations are normalized into ExpenseSplit rows. Group/member composite foreign keys prevent cross-group references. Transactions cover each expense mutation and its immutable audit event. Membership and expense writers share the group-row lock; future settlement writers must do the same.
 
-Selected compatibility target: Next.js 16.4.5, Better Auth 1.7.16, Prisma CLI/client/adapter-pg 7.10.1, Node 24 and TypeScript 5.9.3. Package metadata and official guidance support the combination; runtime compatibility and Prisma schema generation remain phase 1 gates. Use nextCookies last for auth Server Actions and explicitly enable Better Auth Prisma-adapter transactions. Pin versions after approval; do not install from this review alone.
+Pinned and runtime-tested: Next.js 16.4.5, Better Auth 1.7.16, Prisma CLI/client/adapter-pg 7.10.1, Node 24 and TypeScript 5.9.3. Better Auth uses nextCookies last and explicit Prisma-adapter transactions. Preserve the UTC adapter setting found necessary by the expired-session regression. See the reports for actual evidence and remaining dependency limits.
 
 Use Better Auth's Prisma adapter for accounts, hashing, sessions and cookies. Use Tailwind/shadcn + Lucide for accessible UI, React Hook Form for form state, and shared Zod schemas for validation. Browser validation helps users; server validation is authoritative. Use Vitest and real, isolated PostgreSQL integration tests.
 
@@ -19,6 +19,8 @@ Money is BigInt poisha internally and PostgreSQL BIGINT in the target. Transfer 
 Use largest-remainder allocation. For equal remainders, sort stable member IDs and rotate tie priority with a stable expense-ID hash. BDT 100 split three ways becomes 33.34, 33.33 and 33.33. The same expense and inputs always produce the same result; request ordering cannot change it. Different expense IDs vary priority, reducing systematic bias. This is deterministic fairness, not a guarantee that every member receives precisely equal remainder counts over time. Preserve the ID through edits.
 
 ## A4.2 Leaving while owing BDT 500
+
+Phase 3 interim policy: balances are expressly out of scope, so removal rejects any member named as payer on a live expense or receiving a positive allocation. Even offsetting or self-only expenses block removal. Zero-allocation participants may be removed if they are not payers. Historical correction/deletion enforces zero change in every inactive member's per-expense contribution. Replace the interim guard with full-ledger zero-balance checks only in an approved balance phase.
 
 Reject leaving/removal while the member has a nonzero balance, whether they owe or are owed money. Keep membership/history and distinguish LEFT from REMOVED. LEFT members may rejoin through a current valid link; REMOVED members require explicit admin reactivation, so an old link cannot defeat removal. After departure, any expense edit/delete or settlement reversal must leave that inactive member's net balance unchanged at zero. Harmless text edits remain possible; a financial correction affecting them requires reactivation. The single admin cannot leave without a transfer feature; initially they may soft-delete the group instead.
 

@@ -1,8 +1,8 @@
 # FairShare — critically reviewed architecture
 
-**Reviewed design; Phase 1 and Phase 2 (groups/authorization) implemented.** Reviewed 4 November 2026 (Asia/Dhaka). Initial draft is preserved at docs/architecture-initial.md. See docs/PHASE_1_REPORT.md and docs/PHASE_2_REPORT.md for actual scope/evidence. Financial entities/workflows below remain proposals. The latest user defined Phase 2 as groups, superseding the older numbering. Further implementation requires explicit approval.
+**Reviewed design; Phases 1–3 implemented through expenses/splits only.** Reviewed 4 November 2026 (Asia/Dhaka). Initial draft is preserved at docs/architecture-initial.md. See docs/PHASE_1_REPORT.md, docs/PHASE_2_REPORT.md and docs/PHASE_3_REPORT.md for evidence. Balance calculations, settlement/reversal workflows and suggestions below remain proposals. The user's latest phase numbering supersedes the original sequence. Further implementation requires explicit approval.
 
-## 1. Compatibility: supported, not yet runtime-proven
+## 1. Compatibility and observed runtime behavior
 
 | Component | Selected version | Verification |
 | --- | --- | --- |
@@ -13,7 +13,9 @@
 | Prisma CLI / client / adapter-pg | **7.10.1 for all three** | Read-only npm metadata confirms packages exist; CLI Node range ^20.19 / ^22.12 / >=24 |
 | PostgreSQL | 18 | Local installed 18.1; deploy a maintained PostgreSQL 18 patch release |
 
-The selected combination is installed and runtime-verified for authentication and group authorization. Active prisma/schema.prisma contains auth, Group, GroupMember and Activity models; two migrations applied successfully. Group services and real PostgreSQL permission/race tests pass. The full financial schema.proposal.prisma is still not applied or CLI-validated. Do not extend these results into financial-feature claims. Versions are pinned; Prisma 8/RC APIs were not adopted.
+The selected combination is installed and runtime-verified for authentication, groups and expenses/splits. Active prisma/schema.prisma includes Expense/ExpenseSplit with composite group foreign keys. Three migrations apply successfully, including from an empty test schema. The complete schema.proposal.prisma remains an unapplied reference for future settlement entities. Versions are pinned; Prisma 8/RC APIs were not adopted.
+
+Phase 3 boundary: no balance engine exists. Removal uses a deliberately stricter interim involvement guard (any live payer reference or positive participant allocation); offsetting expenses still block removal. Historical edit/delete operations preserve each inactive member's per-expense contribution. All these writers share the group lock. Result money is explicitly named `amountPoisha`; form `amount` is a BDT decimal string. The traced pg adapter deprecation warning is documented in the Phase 3 report.
 
 Runtime finding: Prisma pg 7.10.1 requires an explicit UTC connection timezone on this Dhaka-configured PostgreSQL cluster to preserve timestamptz expiry instants. src/lib/db/prisma.ts sets it; the retained expiration regression passes. See [upstream issue](https://github.com/prisma/orm/issues/28629).
 
