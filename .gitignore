@@ -7,3 +7,5 @@ node_modules/
 tmp/
 assessment-page.png
 artifacts/
+src/generated/
+coverage/

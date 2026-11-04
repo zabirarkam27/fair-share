@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import "./globals.css";
+
 export const metadata: Metadata = {
   title: "FairShare · A little clearer, together",
-  description: "Shared expenses, fair splits, and a clear way to settle up.",
+  description: "Shared moments. Clear balances.",
 };
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="min-h-screen font-sans antialiased">{children}</body>
     </html>
   );
 }

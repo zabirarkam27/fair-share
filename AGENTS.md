@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # FairShare project rules
 
-The user-authored master development instructions received on 4 November 2026 govern this repository. Current work is phase 0: architecture/proposal only. See ARCHITECTURE.md, DECISIONS.md and plan.md.
+The user-authored master development instructions received on 4 November 2026 govern this repository. Phase 1 only was explicitly approved and is implemented: auth, Prisma/PostgreSQL foundation, Tailwind/shadcn, protected routing and responsive layout. Results are in docs/PHASE_1_REPORT.md. Wait for explicit further approval; do not start group management or Phase 2. See ARCHITECTURE.md, DECISIONS.md and plan.md.
 
 ## Approval workflow
 
