@@ -32,10 +32,18 @@ There are no additional historical “best prompts” or human correction conver
 
 None has been identified in this session. Codex authored the current source and proposal documents. Before submission, the candidate should personally implement/review a bounded piece, record exactly what they wrote and why, and revise the Part C answers into their own words. This section must not claim that AI-written work was manually authored.
 
-## Current verification
+## Verification history
 
 ### Architecture review, 4 November 2026
 
 At the user's explicit request, reviewed all nine architecture areas without implementation. Inspected installed package/adapter metadata and official guidance, read npm metadata for Prisma 7.10.1 without installing it, and revised planning/schema proposals. Found unpinned Prisma selection, missing auth cookie handling, removed-user rejoin risk, overbroad historical freeze, missing payment correction, overstated DB constraints and insufficient test/shadow isolation. The revised design adds states, inactive-member delta checks and a narrow full-settlement reversal. No application code/dependency/database changes or new runtime tests were made during this review. Schema CLI validation and the target auth integration remain gated on approval.
 
 TypeScript and 12 unit tests pass, including 4,000 generated split cases. An earlier Webpack production build and 42 real-auth/PostgreSQL HTTP assertions passed. Browser verification created an expense of BDT 100 with allocations 33.34/33.33/33.33. The current proposal is not implemented or Prisma-validated. ESLint is not installed. Latest former-member HTTP regression checks remain pending. Update this log with actual new evidence after each approved phase.
+
+### Phase 1 implementation after explicit approval
+
+The paragraph above describes the earlier reference build, now archived. Phase 1 replaced the active app with auth-only Prisma/Better Auth functionality, Tailwind/shadcn/RHF forms and the responsive protected shell. Domain code/data was preserved; no group management was started. Prisma auth migration was applied to new clean dev/test DBs. Actual current results: 13 unit tests, 14 real PostgreSQL/HTTP integration tests, TypeScript, zero-warning ESLint and production build pass. Browser Server Action checks verified signup/signin/incorrect-password/signout, session persistence and mobile navigation.
+
+Important correction: initially attributed an expired-session HTTP 200 to possible streaming; inspection disproved that hypothesis. The actual Prisma pg timestamptz conversion under a non-UTC DB connection refreshed an expired session. Added explicit UTC startup configuration and retained the regression; it passes. A test's attempted Prisma.dmmf introspection was also unsupported by the selected generator, so it now compares Better Auth's own required field contract to the schema, complemented by actual migration/HTTP tests. shadcn-generated font configuration was corrected to avoid a circular CSS variable and external font dependency. ESLint 10's peer conflicts led to a documented compatible ESLint 9 selection, without disabling rules.
+
+No claim of candidate-authored implementation or new personal reflection is made. Full phase evidence and limitations are in docs/PHASE_1_REPORT.md. Await explicit approval before additional work.

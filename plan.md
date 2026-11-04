@@ -1,8 +1,8 @@
 # FairShare phased plan
 
-Current phase: **0 — architecture proposal, awaiting user approval**.
+Current phase: **1 — implemented and verified; awaiting review/approval before any further phase**. See docs/PHASE_1_REPORT.md.
 
-The pre-existing implementation is a reference baseline. New master instructions supersede its stack/workflow choices. Do not proceed to phase 1 without an explicit approval response.
+The user explicitly approved Phase 1 only. The pre-existing implementation is preserved under reference/pre-phase1 and checkpoint 519735d. No next-phase approval is implied.
 
 ## Phase 0 — audit and architecture
 
@@ -13,11 +13,13 @@ The pre-existing implementation is a reference baseline. New master instructions
 - [x] Write initial DECISIONS.md and project rules.
 - [x] Critically review all nine requested areas; select concrete version target, correct membership/remainder/history assumptions and document runtime-verification limits.
 - [x] Record current verification accurately: TypeScript + 12 tests pass; earlier build + 42 HTTP assertions pass; latest HTTP regressions not run; ESLint missing.
-- [ ] User approves architecture and phase 1.
+- [x] User approves architecture and phase 1.
 
 No database schema was changed and no Prisma dependencies were installed in phase 0.
 
 ## Phase 1 — foundation and database/auth migration (after approval)
+
+**Completed scope:** auth-only Prisma schema/migration, separate PostgreSQL dev/test/shadow databases and roles, Better Auth signup/signin/signout/session handling, protected routing, Tailwind/shadcn/RHF responsive shell, setup documentation and tests. Domain models remain inactive. TypeScript, zero-warning ESLint, 13 unit tests, 14 integration tests, production build and browser smoke pass. UTC adapter/session-expiry regression was fixed and retained. See the report for limits and exact evidence. **Stop here until explicit further approval.**
 
 Review/checkpoint the reference baseline. Pin Next.js 16.4.5, Better Auth 1.7.16 and Prisma CLI/client/adapter-pg 7.10.1 after a security advisory check; pin compatible Tailwind/shadcn, RHF, Vitest and ESLint. Validate the proposal with that CLI, generate/compare Better Auth schema and client, and prove registration/sign-in/sign-out/session cookies using nextCookies and Prisma-adapter transactions. Establish a new target dev DB, isolated test DB and distinct migrate-dev shadow DB. Use non-owner runtime grants and separate migrator/test-maintenance roles. Preserve existing local data; do not overlay/reset the reference Drizzle database. Version changes on compatibility/security failure must be documented before proceeding.
 
