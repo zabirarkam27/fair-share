@@ -1,4 +1,4 @@
-// Phase 1 only: Better Auth models. Domain entities remain an inactive proposal.
+// Active scope: Better Auth + group management. Financial entities are not active.
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -18,6 +18,8 @@ model User {
   updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
   sessions      Session[]
   accounts      Account[]
+  memberships   GroupMember[]
+  activities    Activity[]
   @@map("user")
 }
 
@@ -64,4 +66,68 @@ model Verification {
   updatedAt  DateTime @updatedAt @db.Timestamptz(3)
   @@index([identifier])
   @@map("verification")
+}
+
+enum GroupRole {
+  ADMIN
+  MEMBER
+}
+
+enum MemberStatus {
+  ACTIVE
+  LEFT
+  REMOVED
+}
+
+enum ActivityType {
+  GROUP_CREATED
+  GROUP_DELETED
+  INVITE_ROTATED
+  INVITE_REVOKED
+  MEMBER_JOINED
+  MEMBER_REMOVED
+}
+
+model Group {
+  id              String        @id @default(uuid()) @db.Uuid
+  name            String        @db.VarChar(80)
+  description     String        @default("") @db.VarChar(240)
+  inviteTokenHash String?       @unique @db.VarChar(64)
+  inviteExpiresAt DateTime?     @db.Timestamptz(3)
+  createdAt       DateTime      @default(now()) @db.Timestamptz(3)
+  deletedAt       DateTime?     @db.Timestamptz(3)
+  members         GroupMember[]
+  activities      Activity[]
+  @@map("groups")
+}
+
+model GroupMember {
+  groupId    String       @db.Uuid
+  userId     String
+  role       GroupRole    @default(MEMBER)
+  status     MemberStatus @default(ACTIVE)
+  joinedAt   DateTime     @default(now()) @db.Timestamptz(3)
+  departedAt DateTime?    @db.Timestamptz(3)
+  group      Group        @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  user       User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  @@id([groupId, userId])
+  @@index([userId, status, groupId])
+  @@map("group_members")
+}
+
+model Activity {
+  id            String       @id @default(uuid()) @db.Uuid
+  groupId       String       @db.Uuid
+  actorId       String
+  actorName     String
+  schemaVersion Int          @default(1)
+  type          ActivityType
+  entityId      String
+  before        Json?
+  after         Json?
+  createdAt     DateTime     @default(now()) @db.Timestamptz(3)
+  group         Group        @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  actor         User         @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@index([groupId, createdAt, id])
+  @@map("activity")
 }

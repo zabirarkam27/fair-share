@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { getAuthTables } from "@better-auth/core/db";
 import { readFileSync } from "node:fs";
 describe("Better Auth / Prisma schema compatibility", () => {
-  it("provides every required core auth field and only auth models in Phase 1", () => {
+  it("retains every required core auth field alongside the approved group models", () => {
     const authTables = getAuthTables({ emailAndPassword: { enabled: true } });
     const schema = readFileSync("prisma/schema.prisma", "utf8");
     const models = [...schema.matchAll(/model\s+(\w+)\s*\{([^}]+)\}/g)].map(
@@ -15,6 +15,9 @@ describe("Better Auth / Prisma schema compatibility", () => {
     );
     expect(models.map((model) => model.name).sort()).toEqual([
       "Account",
+      "Activity",
+      "Group",
+      "GroupMember",
       "Session",
       "User",
       "Verification",

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { inviteTokenSchema } from "@/features/groups/schema";
 
 export const signInSchema = z
   .object({
@@ -30,6 +31,12 @@ export const signInFormSchema = signInSchema
   .strict();
 
 export type SignInInput = z.input<typeof signInSchema>;
+export const signInActionSchema = signInSchema
+  .extend({ invite: inviteTokenSchema.optional() })
+  .strict();
+export const signUpActionSchema = signUpSchema
+  .extend({ invite: inviteTokenSchema.optional() })
+  .strict();
 export type SignUpInput = z.input<typeof signUpSchema>;
 export type AuthResult =
   | { error: string; fields?: Partial<Record<keyof SignUpInput, string>> }

@@ -15,8 +15,20 @@ try {
   await client.query(
     `GRANT SELECT,INSERT,UPDATE,DELETE ON TABLE "user",session,account,verification TO ${role}`,
   );
+  const groupTables = await client.query(
+    "SELECT to_regclass('public.groups') present",
+  );
+  if (groupTables.rows[0].present) {
+    await client.query(
+      `GRANT SELECT,INSERT,UPDATE ON TABLE groups,group_members TO ${role}`,
+    );
+    await client.query(`GRANT SELECT,INSERT ON TABLE activity TO ${role}`);
+    await client.query(
+      `REVOKE UPDATE,DELETE,TRUNCATE ON TABLE activity FROM ${role}`,
+    );
+  }
   console.log(
-    `Auth-only table privileges granted to ${test ? "test" : "development"} runtime role.`,
+    `Scoped application table privileges granted to ${test ? "test" : "development"} runtime role.`,
   );
 } finally {
   await client.end();

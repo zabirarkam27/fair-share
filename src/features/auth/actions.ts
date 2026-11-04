@@ -4,7 +4,11 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { APIError } from "better-auth/api";
 import { auth } from "@/lib/auth/server";
-import { signInSchema, signUpSchema, type AuthResult } from "./schema";
+import {
+  signInActionSchema,
+  signUpActionSchema,
+  type AuthResult,
+} from "./schema";
 
 function failure(error: unknown): AuthResult {
   if (error instanceof APIError) {
@@ -26,18 +30,19 @@ function failure(error: unknown): AuthResult {
 }
 
 export async function signIn(input: unknown): Promise<AuthResult> {
-  const parsed = signInSchema.safeParse(input);
+  const parsed = signInActionSchema.safeParse(input);
   if (!parsed.success) return { error: "Check your email and password." };
+  const { invite, ...body } = parsed.data;
   try {
-    await auth.api.signInEmail({ body: parsed.data, headers: await headers() });
+    await auth.api.signInEmail({ body, headers: await headers() });
   } catch (error) {
     return failure(error);
   }
-  redirect("/dashboard");
+  redirect(invite ? "/join/" + invite : "/dashboard");
 }
 
 export async function signUp(input: unknown): Promise<AuthResult> {
-  const parsed = signUpSchema.safeParse(input);
+  const parsed = signUpActionSchema.safeParse(input);
   if (!parsed.success) {
     const fields: Partial<Record<"name" | "email" | "password", string>> = {};
     for (const issue of parsed.error.issues) {
@@ -47,12 +52,13 @@ export async function signUp(input: unknown): Promise<AuthResult> {
     }
     return { error: "Check the highlighted details.", fields };
   }
+  const { invite, ...body } = parsed.data;
   try {
-    await auth.api.signUpEmail({ body: parsed.data, headers: await headers() });
+    await auth.api.signUpEmail({ body, headers: await headers() });
   } catch (error) {
     return failure(error);
   }
-  redirect("/dashboard");
+  redirect(invite ? "/join/" + invite : "/dashboard");
 }
 
 export async function signOut(): Promise<AuthResult> {

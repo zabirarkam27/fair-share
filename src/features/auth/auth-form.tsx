@@ -12,7 +12,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { signIn, signUp } from "./actions";
 import { signInFormSchema, signUpSchema, type SignUpInput } from "./schema";
 
-export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
+export function AuthForm({
+  mode,
+  invite,
+}: {
+  mode: "signin" | "signup";
+  invite?: string;
+}) {
   const signup = mode === "signup";
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
@@ -24,8 +30,12 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
     setError("");
     startTransition(async () => {
       const result = signup
-        ? await signUp(values)
-        : await signIn({ email: values.email, password: values.password });
+        ? await signUp({ ...values, ...(invite ? { invite } : {}) })
+        : await signIn({
+            email: values.email,
+            password: values.password,
+            ...(invite ? { invite } : {}),
+          });
       if ("error" in result) {
         setError(result.error);
         for (const [field, message] of Object.entries(result.fields ?? {})) {
@@ -132,7 +142,10 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
       <p className="text-center text-sm text-muted-foreground">
         {signup ? "Already sharing?" : "New around here?"}{" "}
         <Link
-          href={signup ? "/login" : "/signup"}
+          href={
+            (signup ? "/login" : "/signup") +
+            (invite ? "?invite=" + encodeURIComponent(invite) : "")
+          }
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
           {signup ? "Sign in" : "Create an account"}

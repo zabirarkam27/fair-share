@@ -8,9 +8,12 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { groups } from "@/features/groups/server";
+import { GroupList } from "@/features/groups/group-list";
 export default async function DashboardPage() {
   // Validate here too: a cached/shared layout alone is not an authorization boundary.
   const { user } = await requireSession();
+  const list = await groups.list();
   return (
     <>
       <div className="flex flex-wrap items-start justify-between gap-5">
@@ -54,6 +57,7 @@ export default async function DashboardPage() {
           className="absolute -right-24 -bottom-48 size-96 rounded-full border border-[#cbd9b9] shadow-[0_0_0_30px_#dce6cf55,0_0_0_60px_#dce6cf33]"
         />
       </Card>
+      <GroupList groups={list} />
       <div className="mt-7 grid gap-5 md:grid-cols-2">
         <Card className="shadow-none">
           <CardHeader>

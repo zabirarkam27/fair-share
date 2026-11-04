@@ -1,10 +1,4 @@
-import Link from "next/link";
-import {
-  LayoutDashboard,
-  ShieldCheck,
-  ChevronRight,
-  Layers,
-} from "lucide-react";
+import { ShieldCheck, ChevronRight, Layers } from "lucide-react";
 import { Brand } from "@/components/shared/brand";
 import { SignoutButton } from "@/features/auth/signout-button";
 import { Button } from "@/components/ui/button";
@@ -17,22 +11,22 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
+import { WorkspaceNav } from "./workspace-nav";
 type Identity = { name: string; email: string };
-function Navigation({ identity }: { identity: Identity }) {
+function Navigation({
+  identity,
+  mobile = false,
+}: {
+  identity: Identity;
+  mobile?: boolean;
+}) {
   return (
     <div className="flex h-full flex-col bg-[#193e30] px-6 py-9 text-[#c8d6c4]">
       <Brand inverted />
       <p className="mt-12 mb-4 px-3 text-[9px] font-semibold tracking-[0.2em] text-[#8eac93]">
         YOUR SHARED WORLD
       </p>
-      <Link
-        href="/dashboard"
-        aria-current="page"
-        className="flex items-center gap-3 rounded-lg bg-white/10 px-3 py-3 text-sm text-white"
-      >
-        <LayoutDashboard className="size-4" />
-        Overview
-      </Link>
+      <WorkspaceNav mobile={mobile} />
       <div className="mt-auto pt-10">
         <div className="mb-7 rounded-xl border border-white/10 bg-white/5 p-5">
           <Layers className="mb-5 size-7 text-[#c5dba2]" strokeWidth={1.5} />
@@ -110,7 +104,7 @@ export function AppShell({
                     Navigate your workspace or sign out.
                   </SheetDescription>
                 </SheetHeader>
-                <Navigation identity={identity} />
+                <Navigation identity={identity} mobile />
               </SheetContent>
             </Sheet>
             <div className="flex items-center gap-3 text-xs">
