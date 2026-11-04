@@ -14,6 +14,8 @@ The latest user approved Phase 4 only: pure group balance calculation from persi
 
 ## Approval workflow
 
+- Git preference: use the existing `codex/phase-1-auth` branch for all approved phases. Do not create separate phase branches.
+
 - Do not implement/refactor, install dependencies, apply a Prisma migration, publish, or start the next phase until the user approves that phase.
 - After each approved phase, run TypeScript, ESLint and relevant tests; review security implications and the diff; report changes, evidence, limitations and next phase; then wait for approval.
 - Preserve existing source/data. The existing Drizzle/Route Handler build predates the master instructions; it is a reference baseline, not evidence that Prisma/Server Actions have already been implemented.

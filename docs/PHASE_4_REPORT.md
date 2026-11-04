@@ -1,6 +1,6 @@
 # Phase 4 — Group Balance Calculation
 
-Implemented under the user's explicit Phase 4 approval on 4 November 2026 (Asia/Dhaka). Implementation commit: `c80d6ab`, branch [codex/phase-4-balances](https://github.com/zabirarkam27/fair-share/tree/codex/phase-4-balances). Subsequently pushed after the user explicitly requested checks and GitHub publication. No settlement suggestions, settlement-recording workflow, reversals or deployment were implemented.
+Implemented under the user's explicit Phase 4 approval on 4 November 2026 (Asia/Dhaka). Implementation commit: `c80d6ab`, now on the original default branch [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth). Subsequently pushed after explicit publication approval and consolidated by fast-forward at the user's single-branch request. No settlement suggestions, settlement-recording workflow, reversals or deployment were implemented in Phase 4.
 
 ## Actual verification
 
