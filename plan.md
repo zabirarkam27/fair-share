@@ -56,7 +56,7 @@ See docs/PHASE_2_REPORT.md for historical evidence. Leave, admin transfer and re
 
 ## Future work — proposals, not authorization
 
-Settlement suggestions, recording payments and reversals need separate approval. Future settlement writers must share the group lock, authenticate involved-party/admin authority, validate current balances, preserve inactive-member net deltas and commit idempotent records/audit atomically. Suggestions must use the complete verified ledger and make no unsupported minimum-payment claim. Phase 4 remains local; earlier publication authorization was fulfilled by pushing Phases 1–3.
+Settlement suggestions, recording payments and reversals need separate approval. Future settlement writers must share the group lock, authenticate involved-party/admin authority, validate current balances, preserve inactive-member net deltas and commit idempotent records/audit atomically. Suggestions must use the complete verified ledger and make no unsupported minimum-payment claim. At the user's subsequent explicit check/commit/push request, all checks were rerun successfully and Phase 4 was pushed to `origin/codex/phase-4-balances`. The default branch still contains Phases 1–3; no merge or next-phase implementation was performed.
 
 The full Prisma proposal is an entity design reference, not a file to copy over the applied schema. Retain active table mappings and migration history while adding explicitly approved entities. Shared invitation throttling, log redaction, recovery/verification, retention and operational hardening remain deployment gates.
 

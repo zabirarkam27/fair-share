@@ -1,6 +1,6 @@
 # Phase 4 — Group Balance Calculation
 
-Implemented under the user's explicit Phase 4 approval on 4 November 2026 (Asia/Dhaka). Local implementation commit: `c80d6ab`, branch `codex/phase-4-balances`. Phase 4 has not been pushed. No settlement suggestions, settlement-recording workflow, reversals or deployment were implemented.
+Implemented under the user's explicit Phase 4 approval on 4 November 2026 (Asia/Dhaka). Implementation commit: `c80d6ab`, branch [codex/phase-4-balances](https://github.com/zabirarkam27/fair-share/tree/codex/phase-4-balances). Subsequently pushed after the user explicitly requested checks and GitHub publication. No settlement suggestions, settlement-recording workflow, reversals or deployment were implemented.
 
 ## Actual verification
 
@@ -75,4 +75,8 @@ Initial pure-test discovery failed because Vitest's `%j` test-name formatter att
 
 The reader currently loads the complete ledger into memory, with a 15-second read transaction limit. SQL aggregation/streaming or paginated contribution detail may be appropriate for large groups later; no production-scale claim is made. There is no balance cache to become stale. Existing authentication recovery/verification, shared abuse protection, dependency maintenance and retention limitations remain.
 
-No new packages, subagents, deployment or remote push were used for Phase 4. Await explicit approval before settlement suggestions or any later scope.
+No new packages, subagents or deployment were used for Phase 4. Await explicit approval before settlement suggestions or any later scope.
+
+## GitHub publication verification
+
+At the user's subsequent request to check, commit and push, reran all 89 unit tests, all 79 PostgreSQL integration tests, TypeScript, zero-warning ESLint, production build and all four clean-schema migrations. All passed before pushing. The first build attempt exited without a diagnostic; a fresh captured build passed with no source changes. No application fix or empty commit was needed. The existing implementation and report commits (`c80d6ab`, `77897ac`) were pushed to `origin/codex/phase-4-balances`; publication notes were updated in a separate documentation commit. The local app was restored on port 3000. No merge or change to the default branch was performed.
