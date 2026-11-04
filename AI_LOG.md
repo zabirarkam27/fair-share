@@ -1,5 +1,13 @@
 # Actual AI usage log (in progress)
 
+## Latest evidence — Phase 4 after explicit approval
+
+The user requested group balances only and approval before settlement suggestions. Codex implemented a pure BigInt engine first (29 tests), then an authorized full-ledger reader, current-user totals, per-record/member breakdown and Server Component UI. Added minimal Settlement storage with SELECT-only runtime privileges so persisted payments can participate; no settlement recording or reversal workflow was implemented. Full-ledger zero-balance removal replaced the earlier conservative involvement guard. Existing inactive-history correction checks remain. No subagents or new dependencies were used.
+
+The supplied examples had two conflicts, identified before implementation: scenario 1's B/C shares imply different nets from its expected result; scenario 2's stated BDT amount is ten times the listed poisha expectations. Both interpretations are separately tested. The engine follows persisted amounts and allocations. Initial test discovery failed because Vitest's %j test-name formatter attempted BigInt JSON serialization; changing only that test label fixed discovery. No monetary rule or global BigInt JSON behavior was changed to conceal the issue.
+
+Actual final evidence: 89 unit tests, 79 real PostgreSQL integration tests, TypeScript, zero-warning ESLint, production build and all four migrations from an empty isolated schema pass. The new integration tests include a committed expense edit during a repeatable-read snapshot, corrupt-ledger failure UI, complete-ledger pagination independence, settlement signs, cross-group totals, authorization and settled-member history guards. Browser checks on the separate localhost:3200 test origin showed +600/−600 BDT after a 400 BDT recorded settlement on a 1000 BDT expense; the mobile table remained inside its container. The two browser accounts/group and temporary server were cleaned up. The normal user session was left intact. Phase 4 local code commit: c80d6ab; it has not been pushed. Phases 1–3 were previously pushed under explicit user authorization. See docs/PHASE_4_REPORT.md; await approval before further work.
+
 ## Latest evidence — Phase 3 after explicit approval
 
 The user required the pure split engine and critical tests before UI, and expressly excluded balances. Codex implemented BigInt codecs and independent equal/exact/percentage/shares functions first; 42 focused tests passed before persistence/UI work. It then added the expense/split migration, authenticated creator/admin services/actions, transaction/audit history, retries/versions and RHF/Zod responsive forms. No subagents were used or new packages installed.

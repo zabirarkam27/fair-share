@@ -1,6 +1,6 @@
 # FairShare — critically reviewed architecture
 
-**Reviewed design; Phases 1–3 implemented through expenses/splits only.** Reviewed 4 November 2026 (Asia/Dhaka). Initial draft is preserved at docs/architecture-initial.md. See docs/PHASE_1_REPORT.md, docs/PHASE_2_REPORT.md and docs/PHASE_3_REPORT.md for evidence. Balance calculations, settlement/reversal workflows and suggestions below remain proposals. The user's latest phase numbering supersedes the original sequence. Further implementation requires explicit approval.
+**Reviewed design; Phases 1–4 implemented through persisted group balances.** Reviewed 4 November 2026 (Asia/Dhaka). Initial draft: docs/architecture-initial.md. Evidence: docs/PHASE_1_REPORT.md through docs/PHASE_4_REPORT.md. Settlement storage is read-only to the runtime; recording, reversals and suggestions below remain proposals. The user's latest phase numbering supersedes the original sequence. Further implementation requires explicit approval.
 
 ## 1. Compatibility and observed runtime behavior
 
@@ -13,9 +13,11 @@
 | Prisma CLI / client / adapter-pg | **7.10.1 for all three** | Read-only npm metadata confirms packages exist; CLI Node range ^20.19 / ^22.12 / >=24 |
 | PostgreSQL | 18 | Local installed 18.1; deploy a maintained PostgreSQL 18 patch release |
 
-The selected combination is installed and runtime-verified for authentication, groups and expenses/splits. Active prisma/schema.prisma includes Expense/ExpenseSplit with composite group foreign keys. Three migrations apply successfully, including from an empty test schema. The complete schema.proposal.prisma remains an unapplied reference for future settlement entities. Versions are pinned; Prisma 8/RC APIs were not adopted.
+The selected combination is installed and runtime-verified for authentication, groups, expenses/splits and persisted balances. Active prisma/schema.prisma includes group-bound Expense/ExpenseSplit and read-only Settlement storage. Four additive migrations apply successfully, including from an empty test schema. The complete schema.proposal.prisma remains an unapplied reference for future settlement recording/reversal workflows. Versions are pinned; Prisma 8/RC APIs were not adopted.
 
-Phase 3 boundary: no balance engine exists. Removal uses a deliberately stricter interim involvement guard (any live payer reference or positive participant allocation); offsetting expenses still block removal. Historical edit/delete operations preserve each inactive member's per-expense contribution. All these writers share the group lock. Result money is explicitly named `amountPoisha`; form `amount` is a BDT decimal string. The traced pg adapter deprecation warning is documented in the Phase 3 report.
+Phase 4 implementation: the pure engine credits payer/debits saved shares, adds settlement amounts to sender/subtracts from receiver, validates every expense sum and requires exact group zero. Group reads and cross-group current-user totals use RepeatableRead snapshots and the full ledger; dashboard debts and receivables remain separate across groups. Detailed DTOs expose paid/allocated/sent/received amounts and per-record contributions as explicit poisha strings. Invalid records fail visibly. No split recalculation, client financial values or cached balance columns are used.
+
+Removal now checks full-ledger zero balance under the shared group lock, superseding Phase 3's conservative involvement restriction. Historical corrections preserve each inactive member's per-expense contribution. Future settlement writers must also take the group lock. Current runtime settlement privileges are SELECT only: no recording service/action/UI, reversal or suggestion is shipped. Existing pg adapter deprecation behavior remains documented in the phase reports.
 
 Runtime finding: Prisma pg 7.10.1 requires an explicit UTC connection timezone on this Dhaka-configured PostgreSQL cluster to preserve timestamptz expiry instants. src/lib/db/prisma.ts sets it; the retained expiration regression passes. See [upstream issue](https://github.com/prisma/orm/issues/28629).
 

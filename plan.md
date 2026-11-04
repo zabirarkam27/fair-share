@@ -1,6 +1,6 @@
 # FairShare approval-gated plan
 
-Current status: **Phase 3 — Expense Management and Financial Split Engine implemented and verified; awaiting explicit approval.** The user's numbering supersedes the original sequence. Balances and settlements were not started.
+Current status: **Phase 4 — Group Balance Calculation implemented and verified; awaiting explicit approval.** Settlement storage is read-only to the application; settlement recording, reversals and suggestions were not implemented.
 
 ## Completed foundations
 
@@ -38,11 +38,25 @@ See docs/PHASE_2_REPORT.md for historical evidence. Leave, admin transfer and re
 - [x] 60 unit tests, 59 PostgreSQL integration tests, TypeScript, ESLint and production build pass.
 - [x] All 3 migrations succeed from a new empty isolated PostgreSQL schema.
 - [x] Browser all-method save/edit/delete, precision rejection, excluded payer and mobile form verified on isolated test origin.
-- [ ] User reviews docs/PHASE_3_REPORT.md and explicitly approves further work.
+- [x] User approved Phase 4 group balance calculation only.
+
+## Phase 4 — completed approved scope
+
+- [x] Pure BigInt balance engine: payer credits, allocated-share debits, sender increases and receiver decreases.
+- [x] Validate persisted records and exact expense/group zero sums; fail visibly on corruption.
+- [x] Authorized complete-ledger reads in RepeatableRead transactions; no client financial/actor values.
+- [x] Group/member net balances, current-user owed/receivable totals, detailed and per-expense/settlement contributions.
+- [x] Minimal settlement storage migration; runtime SELECT only, no recording action/API/UI.
+- [x] Full-ledger zero-balance member removal and retained inactive-history guards.
+- [x] Dashboard/group display, mobile table overflow containment and verified failure state.
+- [x] Required scenarios, including separately documented corrections to scenarios 1 and 2.
+- [x] 89 unit tests, 79 PostgreSQL integration tests, TypeScript, ESLint, production build and all four clean-schema migrations pass.
+- [x] Browser shows +600/−600 BDT and exact zero after a persisted 400 BDT settlement against a 1000 BDT expense.
+- [ ] User reviews docs/PHASE_4_REPORT.md and approves any later work.
 
 ## Future work — proposals, not authorization
 
-Balances, settlement suggestions, recorded payments and reversals need separate approval. They must use all saved allocations, exact BigInt aggregates, reviewed sign conventions, consistent snapshots, invariant tests and full-ledger removal guards. Never derive balances from a paginated expense list. The current removal guard deliberately blocks any live payer/positive-allocation involvement until that phase is approved.
+Settlement suggestions, recording payments and reversals need separate approval. Future settlement writers must share the group lock, authenticate involved-party/admin authority, validate current balances, preserve inactive-member net deltas and commit idempotent records/audit atomically. Suggestions must use the complete verified ledger and make no unsupported minimum-payment claim. Phase 4 remains local; earlier publication authorization was fulfilled by pushing Phases 1–3.
 
 The full Prisma proposal is an entity design reference, not a file to copy over the applied schema. Retain active table mappings and migration history while adding explicitly approved entities. Shared invitation throttling, log redaction, recovery/verification, retention and operational hardening remain deployment gates.
 

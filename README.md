@@ -1,6 +1,6 @@
-# FairShare — Phase 3
+# FairShare — Phase 4
 
-Authentication, responsive shell, groups/authorization and expense management with four exact split methods. Expense calculations use BigInt poisha and server-authoritative allocations. Balances and settlements are **not active**. The earlier implementation is preserved at `reference/pre-phase1/` and Git checkpoint `519735d`; its database was not reset or imported.
+Authentication, groups/authorization, four exact expense split methods and persisted group balance calculation. Money uses BigInt poisha. Dashboard totals and group breakdowns use authorized consistent database reads. Settlement records can be read; recording, reversals and settlement suggestions are **not implemented**. The reference build remains at `reference/pre-phase1/` and checkpoint `519735d`; its database was not reset or imported.
 
 ## Stack
 
@@ -41,7 +41,7 @@ Copy `.env.example` to `.env.local` and supply real, separately provisioned URLs
 | BETTER_AUTH_SECRET | Cryptographically random secret, at least 32 characters |
 | BETTER_AUTH_URL | Exact trusted origin; local http://127.0.0.1:3000 |
 
-Migration commands use Prisma `migrate deploy`; they do not reset a database. Three migrations add auth, groups/memberships/activity, then expenses/splits, with scoped runtime grants. Settlement entities in `prisma/schema.proposal.prisma` remain an inactive reference; do not replace the applied schema with that file.
+Migration commands use Prisma `migrate deploy`; they do not reset a database. Four migrations add auth, groups/memberships/activity, expenses/splits, then settlement storage for balance reads. The runtime role has SELECT only on settlements. Settlement recording/reversal workflows in `prisma/schema.proposal.prisma` remain an inactive reference; do not replace the applied schema with that file.
 
 ## Authentication and routes
 
@@ -61,7 +61,7 @@ Passwords are hashed/verified by Better Auth. No custom password algorithm, sess
 
 Invites expire in seven days, contain 32 random bytes and are stored only as SHA-256 hashes. Copy the raw link when generated; it cannot be retrieved later. `/join/[token]` provides no private group preview and never joins on GET. Signin/signup returns to the invitation, then acceptance checks it again under a group-row lock. Duplicate joins are idempotent. Removed members cannot return through a generic invitation. No client actor ID or role is trusted.
 
-Until balances are approved, removal conservatively rejects a member who pays any live expense or receives a positive allocation in one. Offsetting expenses still block removal. Inactive history remains, and corrections cannot change an inactive member's financial contribution. Leave/reactivation/role-transfer UI and shared invitation throttling remain deferred.
+Removal checks the complete persisted ledger under the group write lock and requires exactly zero net balance. Fully settled and offsetting records can therefore permit removal. Inactive history remains, and later corrections cannot change an inactive member's financial contribution. Leave/reactivation/role-transfer UI and shared invitation throttling remain deferred.
 
 ## Expenses and exact splits
 
@@ -70,6 +70,16 @@ Group pages list expenses in pages of 25, show saved allocations and provide add
 Enter BDT as digit strings with at most two decimal places. The server parses them into integer poisha; totals must be ৳0.01–৳1,000,000.00. Exact inputs must sum to the total. Percentages use basis points (50.25% = 5025; total 10000). Share weights are positive integers up to 1,000,000. Largest remainders receive extra poisha; equal remainders use sorted member IDs and a stable expense-ID rotation. New-expense previews disclose that tied recipients can differ by one poisha when saved; edits preserve the ID.
 
 PostgreSQL amounts are BIGINT poisha. Result DTOs/audit snapshots use `amountPoisha` integer strings. `inputUnits` retains exact poisha, basis points or weights; equal splits use null. Creates/splits/audit writes are atomic. Create retries use scoped request keys; edits/deletes require the current version. Deletion retains expenses, splits and history. See [Phase 3 results](docs/PHASE_3_REPORT.md).
+
+## Group balances
+
+Positive balance means owed money, negative means owes, and zero means settled. Each expense credits its payer by the full total and debits included members by their saved allocations. A settlement increases the sender's balance and decreases the receiver's. The balance reader never recomputes splits or accepts monetary/identity values from the client.
+
+Dashboard cards separately total what you owe and what you are owed across active groups; debt in one group is not cancelled against a receivable in another. Group pages show every member's net balance, paid/allocated/sent/received breakdown, per-expense contributions, settlement contributions and exact zero-sum verification. Former members remain in the ledger. Deleted expenses stop contributing, while recorded settlements remain.
+
+All related records are collected within a RepeatableRead transaction. Balances use the entire ledger, not the 25-row expense page. Invalid saved allocations fail visibly as “Balances unavailable”; they do not become fabricated zero balances. Money DTOs use decimal integer strings. No balance cache or manually editable balance column exists. See [Phase 4 results](docs/PHASE_4_REPORT.md) for actual evidence and corrections to the supplied example arithmetic/units.
+
+Settlement storage is present to support these reads, with positive/nonself/group-bound constraints. There is no settlement creation action/API/UI in this phase. Integration/browser fixtures insert recorded settlements using only the isolated test maintenance role; they do not represent a shipped recording workflow.
 
 ## Demo accounts
 
@@ -104,8 +114,8 @@ Webpack is explicitly selected because this sandbox blocked Turbopack junction c
 
 ## Phase boundary and known limits
 
-Groups, expenses and all four split methods are implemented; balances and settlements are not. No deployment, GitHub publication or assessment submission has been performed. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP rate limits are not a shared limiter or claimed to cover direct Server Action calls. Current pg 8 emits a deprecation warning from Prisma adapter transaction relation queries; all checks pass, and pg 9 requires compatibility review.
+Groups, expenses, four split methods and group balances are implemented. Settlement recording, reversals and suggestions await approval. Phases 1–3 were pushed to [the repository](https://github.com/zabirarkam27/fair-share); Phase 4 is committed locally on `codex/phase-4-balances` and has not been pushed. No deployment or assessment submission has occurred. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; all checks pass, and pg 9 requires compatibility review.
 
 ESLint 9.39.5 is retained for the declared peer ranges of Next 16.4.5's lint plugins; npm marks that ESLint line unsupported. ESLint 10 executed locally but produced transitive peer conflicts, so it was not left as an unsupported combination. Revisit the lint toolchain together when Next's plugins support it. shadcn is development tooling, not a runtime dependency; its transitive audit advisories are reported in the phase report. Do not apply npm's suggested major downgrade blindly.
 
-See [Phase 3 results](docs/PHASE_3_REPORT.md), [Phase 2 history](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.
+See [Phase 4 results](docs/PHASE_4_REPORT.md), [Phase 3 history](docs/PHASE_3_REPORT.md), [Phase 2 history](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.

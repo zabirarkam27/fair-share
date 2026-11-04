@@ -1,6 +1,6 @@
 # FairShare reviewed decisions
 
-Status: authentication, groups, expenses and four split methods are implemented under approval through Phase 3. Balance/settlement rules below remain a future target. Evidence: docs/PHASE_3_REPORT.md. Implementation differences: ARCHITECTURE.md.
+Status: authentication, groups, expenses, four splits and group balance calculation are implemented through approved Phase 4. Settlement storage supports balance reads only; recording/reversal/suggestion workflows remain proposed. Evidence: docs/PHASE_4_REPORT.md. Implementation differences: ARCHITECTURE.md.
 
 ## Technical choices
 
@@ -20,7 +20,7 @@ Use largest-remainder allocation. For equal remainders, sort stable member IDs a
 
 ## A4.2 Leaving while owing BDT 500
 
-Phase 3 interim policy: balances are expressly out of scope, so removal rejects any member named as payer on a live expense or receiving a positive allocation. Even offsetting or self-only expenses block removal. Zero-allocation participants may be removed if they are not payers. Historical correction/deletion enforces zero change in every inactive member's per-expense contribution. Replace the interim guard with full-ledger zero-balance checks only in an approved balance phase.
+Phase 4 supersedes the Phase 3 conservative involvement guard: removal now calculates the complete persisted ledger under the shared group write lock and requires exactly zero balance. Settlements and offsetting expenses may therefore permit removal. Historical correction/deletion continues to enforce zero change in every inactive member's per-expense contribution.
 
 Reject leaving/removal while the member has a nonzero balance, whether they owe or are owed money. Keep membership/history and distinguish LEFT from REMOVED. LEFT members may rejoin through a current valid link; REMOVED members require explicit admin reactivation, so an old link cannot defeat removal. After departure, any expense edit/delete or settlement reversal must leave that inactive member's net balance unchanged at zero. Harmless text edits remain possible; a financial correction affecting them requires reactivation. The single admin cannot leave without a transfer feature; initially they may soft-delete the group instead.
 
@@ -29,6 +29,8 @@ Reject leaving/removal while the member has a nonzero balance, whether they owe 
 Allow an active author/admin to edit with an expected version. Explain that the change affects today's balances even after previous settlement. Preserve existing payment records and write before/after values, original inputs, exact allocations, actor ID/name and timestamp atomically. Historical inactive references may be retained, but no new inactive references introduced; every inactive member's proposed financial delta must be zero. This permits description/date corrections without forcing rejoin. Recorded payment mistakes are corrected with a full append-only SettlementReversal, followed by a correct new payment if needed. Closed periods remain deferred.
 
 ## A4.4 Stored or calculated balances
+
+Implemented in Phase 4: pure BigInt accounting over all persisted live expenses, saved allocations and settlement records collected in a RepeatableRead snapshot. No split recalculation, balance columns or cache. Dashboard debt/receivables sum separately across groups. Per-expense contributions and paid/allocated/sent/received totals reconcile to member nets; every group must total exactly 0n. Invalid ledger records fail visibly. Reversals remain a future extension; no SQL SUM conversion is currently needed because individual Prisma BigInts feed the pure engine.
 
 Expenses, saved allocations, settlements and reversals are the source of truth. Calculate net balances; never allow manual balance edits. Positive means is owed, negative means owes. Payments sent increase the sender's balance and reduce the receiver's; reversals apply the exact opposite. Read a consistent snapshot, use indexed group-scoped aggregation and convert exact SQL aggregate text into BigInt. A cache/materialized read model is a later measured optimization with reconciliation/invalidation tests. Persist rounded allocations so future algorithm changes cannot rewrite old bills.
 
