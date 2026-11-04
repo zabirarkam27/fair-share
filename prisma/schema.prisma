@@ -1,4 +1,5 @@
-// Active scope: authentication, groups and expenses. No settlements or balances.
+// Active scope: authentication, groups, expenses and balance reads.
+// Settlement storage is read-only to the runtime until a recording phase is approved.
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -102,6 +103,12 @@ enum SplitType {
   SHARES
 }
 
+enum PaymentMethod {
+  BKASH
+  CASH
+  BANK
+}
+
 model Group {
   id              String        @id @default(uuid()) @db.Uuid
   name            String        @db.VarChar(80)
@@ -113,22 +120,26 @@ model Group {
   members         GroupMember[]
   activities      Activity[]
   expenses        Expense[]
+  settlements     Settlement[]
 
   @@map("groups")
 }
 
 model GroupMember {
-  groupId         String         @db.Uuid
-  userId          String
-  role            GroupRole      @default(MEMBER)
-  status          MemberStatus   @default(ACTIVE)
-  joinedAt        DateTime       @default(now()) @db.Timestamptz(3)
-  departedAt      DateTime?      @db.Timestamptz(3)
-  group           Group          @relation(fields: [groupId], references: [id], onDelete: Restrict)
-  user            User           @relation(fields: [userId], references: [id], onDelete: Restrict)
-  paidExpenses    Expense[]      @relation("Payer")
-  createdExpenses Expense[]      @relation("Creator")
-  splits          ExpenseSplit[]
+  groupId             String         @db.Uuid
+  userId              String
+  role                GroupRole      @default(MEMBER)
+  status              MemberStatus   @default(ACTIVE)
+  joinedAt            DateTime       @default(now()) @db.Timestamptz(3)
+  departedAt          DateTime?      @db.Timestamptz(3)
+  group               Group          @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  user                User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  paidExpenses        Expense[]      @relation("Payer")
+  createdExpenses     Expense[]      @relation("Creator")
+  splits              ExpenseSplit[]
+  sentSettlements     Settlement[]   @relation("SettlementSender")
+  receivedSettlements Settlement[]   @relation("SettlementReceiver")
+  recordedSettlements Settlement[]   @relation("SettlementRecorder")
 
   @@id([groupId, userId])
   @@index([userId, status, groupId])
@@ -192,4 +203,28 @@ model Activity {
 
   @@index([groupId, createdAt, id])
   @@map("activity")
+}
+
+// Persisted records consumed by the balance reader. No public write API yet.
+model Settlement {
+  id          String        @id @default(uuid()) @db.Uuid
+  groupId     String        @db.Uuid
+  fromId      String
+  toId        String
+  createdById String
+  amount      BigInt
+  method      PaymentMethod
+  requestKey  String        @db.Uuid
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  group       Group         @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  sender      GroupMember   @relation("SettlementSender", fields: [groupId, fromId], references: [groupId, userId], onDelete: Restrict)
+  receiver    GroupMember   @relation("SettlementReceiver", fields: [groupId, toId], references: [groupId, userId], onDelete: Restrict)
+  recorder    GroupMember   @relation("SettlementRecorder", fields: [groupId, createdById], references: [groupId, userId], onDelete: Restrict)
+
+  @@unique([groupId, id])
+  @@unique([groupId, createdById, requestKey])
+  @@index([groupId, createdAt, id])
+  @@index([groupId, fromId])
+  @@index([groupId, toId])
+  @@map("settlements")
 }

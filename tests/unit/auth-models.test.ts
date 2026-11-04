@@ -21,6 +21,7 @@ describe("Better Auth / Prisma schema compatibility", () => {
       "Group",
       "GroupMember",
       "Session",
+      "Settlement",
       "User",
       "Verification",
     ]);

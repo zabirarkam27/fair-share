@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # FairShare project rules
 
-The latest user explicitly approved Phase 3 only: pure financial split engine FIRST, then transactional expense management and UI. Test all critical split cases before the UI. Use BigInt poisha, integer basis points and positive integer weights. Keep balances and settlements out of scope. Add a conservative financial-involvement removal guard before enabling expense writes; do not strand inactive members through historical edits. Stop at the Phase 3 report and await approval.
+The latest user approved Phase 4 only: pure group balance calculation from persisted expenses/splits and recorded settlements, consistent authorized reads, current-user totals and detailed breakdown with exact zero-sum verification. Positive means owed money; negative means owes. Introduce only the settlement storage/read support required for persisted calculation; no public recording workflow, reversals or settlement suggestions yet. Correctly flag the unit/arithmetic conflicts in supplied scenarios rather than corrupt the accounting rules. Replace the interim removal guard with full-ledger zero-balance validation while retaining inactive-member delta protection. Stop after checks/report and wait for explicit approval of later work.
 
 ## Approval workflow
 

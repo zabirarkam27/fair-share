@@ -2,6 +2,8 @@ import { config } from "dotenv";
 import { Client } from "pg";
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
+import { readdirSync, existsSync } from "node:fs";
+import { join } from "node:path";
 import {
   assertTestDatabase,
   databaseIdentity,
@@ -43,16 +45,20 @@ try {
   const migrations = await db.query(
     `SELECT count(*)::int n FROM "${schema}"._prisma_migrations WHERE finished_at IS NOT NULL`,
   );
-  if (migrations.rows[0].n !== 3)
+  const expected = readdirSync("prisma/migrations").filter((name) =>
+    existsSync(join("prisma/migrations", name, "migration.sql")),
+  ).length;
+  if (migrations.rows[0].n !== expected)
     throw new Error("Incomplete clean migration chain.");
   const tables = await db.query(
     "SELECT table_name FROM information_schema.tables WHERE table_schema=$1",
     [schema],
   );
-  if (!tables.rows.some((x) => x.table_name === "expense_splits"))
-    throw new Error("Missing expense tables.");
+  for (const name of ["expense_splits", "settlements"])
+    if (!tables.rows.some((x) => x.table_name === name))
+      throw new Error("Missing financial table.");
   console.log(
-    "All three migrations succeeded from an empty isolated PostgreSQL schema.",
+    `All ${expected} migrations succeeded from an empty isolated PostgreSQL schema.`,
   );
 } finally {
   if (created) await db.query(`DROP SCHEMA "${schema}" CASCADE`);

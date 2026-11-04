@@ -38,6 +38,15 @@ try {
       `GRANT SELECT,INSERT,UPDATE,DELETE ON TABLE expense_splits TO ${role}`,
     );
   }
+  const settlements = await client.query(
+    "SELECT to_regclass('public.settlements') present",
+  );
+  if (settlements.rows[0].present) {
+    await client.query(`GRANT SELECT ON TABLE settlements TO ${role}`);
+    await client.query(
+      `REVOKE INSERT,UPDATE,DELETE,TRUNCATE ON TABLE settlements FROM ${role}`,
+    );
+  }
   console.log(
     `Scoped application table privileges granted to ${test ? "test" : "development"} runtime role.`,
   );

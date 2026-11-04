@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { groups } from "@/features/groups/server";
 import { GroupList } from "@/features/groups/group-list";
+import { DashboardBalances } from "@/features/balances/balance-panel";
 export default async function DashboardPage() {
   // Validate here too: a cached/shared layout alone is not an authorization boundary.
   const { user } = await requireSession();
@@ -33,6 +34,7 @@ export default async function DashboardPage() {
           Account ready
         </Badge>
       </div>
+      <DashboardBalances />
       <Card className="relative mt-9 overflow-hidden border-[#dce6cf] bg-[#eaf1e1] shadow-none">
         <CardHeader className="relative z-10 px-6 pt-7 sm:px-8">
           <div className="mb-5 flex size-12 items-center justify-center rounded-2xl border border-[#cfddbd] bg-[#dce9cb]">

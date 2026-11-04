@@ -8,6 +8,7 @@ import {
   joinGroupSchema,
 } from "./schema";
 import { newInvitation, hashInviteToken, INVITE_LIFETIME_MS } from "./invites";
+import { readLedgerSnapshots } from "@/features/balances/ledger";
 
 type Identity = { user: { id: string; name: string } };
 type SessionResolver = () => Promise<Identity | null>;
@@ -315,23 +316,15 @@ export function createGroupService(
             "CONFLICT",
             "The group admin cannot be removed.",
           );
-        // Conservative until the balance engine is approved: do not strand
-        // anyone financially involved, even when expenses might offset.
-        const involved = await tx.expense.findFirst({
-          where: {
-            groupId,
-            deletedAt: null,
-            OR: [
-              { paidById: memberId },
-              { splits: { some: { userId: memberId, amount: { gt: 0n } } } },
-            ],
-          },
-          select: { id: true },
-        });
-        if (involved)
+        // The group lock serializes this full-ledger check with expense writes.
+        const ledger = (await readLedgerSnapshots(tx, [groupId])).get(groupId)!;
+        const balance = ledger.calculated.members.find(
+          (m) => m.memberId === memberId,
+        )!;
+        if (balance.netPoisha !== 0n)
           throw new GroupError(
             "CONFLICT",
-            "This member is involved in an active expense and cannot be removed yet.",
+            "This member must have a zero balance before removal.",
           );
         await tx.groupMember.update({
           where: { groupId_userId: { groupId, userId: memberId } },
