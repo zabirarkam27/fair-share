@@ -16,6 +16,7 @@
     "db:migrate:test": "node scripts/migrate.mjs --test",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
+    "db:seed:demo": "node --conditions=react-server --import tsx scripts/seed-demo.ts",
     "postgres:local": "node scripts/postgres-local.mjs",
     "postgres:stop": "node scripts/postgres-local.mjs --stop"
   },
