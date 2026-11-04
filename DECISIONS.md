@@ -1,12 +1,12 @@
 # FairShare reviewed decisions
 
-Status: authentication, groups, expenses, four splits and group balance calculation are implemented through approved Phase 4. Settlement storage supports balance reads only; recording/reversal/suggestion workflows remain proposed. Evidence: docs/PHASE_4_REPORT.md. Implementation differences: ARCHITECTURE.md.
+Status: authentication, groups, expenses, balances, settlement suggestions and completed-payment recording are implemented through approved Phase 5. Reversal/dispute workflows remain proposed. Evidence: docs/PHASE_5_REPORT.md. Implementation differences: ARCHITECTURE.md.
 
 ## Technical choices
 
 Use Next.js App Router with strict TypeScript and Node runtime. Server pages perform authorized reads; Server Actions perform mutations through feature services. Route Handlers serve Better Auth and only genuinely HTTP-oriented endpoints. A separate Express API would add deployment and session plumbing without improving this assessment.
 
-PostgreSQL + Prisma now replace the archived Drizzle implementation under explicit approval. Expense allocations are normalized into ExpenseSplit rows. Group/member composite foreign keys prevent cross-group references. Transactions cover each expense mutation and its immutable audit event. Membership and expense writers share the group-row lock; future settlement writers must do the same.
+PostgreSQL + Prisma now replace the archived Drizzle implementation under explicit approval. Expense allocations are normalized into ExpenseSplit rows. Group/member composite foreign keys prevent cross-group references. Transactions cover each expense/settlement mutation and its immutable audit event. Membership, expense and settlement writers share the group-row lock.
 
 Pinned and runtime-tested: Next.js 16.4.5, Better Auth 1.7.16, Prisma CLI/client/adapter-pg 7.10.1, Node 24 and TypeScript 5.9.3. Better Auth uses nextCookies last and explicit Prisma-adapter transactions. Preserve the UTC adapter setting found necessary by the expired-session regression. See the reports for actual evidence and remaining dependency limits.
 
@@ -36,7 +36,9 @@ Expenses, saved allocations, settlements and reversals are the source of truth. 
 
 ## A4.5 Does the algorithm always minimize payments?
 
-No. The initial deterministic greedy algorithm matches the largest debtor with the largest creditor and settles one of them each step. It clears all balances in at most k-1 payments for k nonzero members, but is not globally optimal. Example in poisha: debtors 8, 7, 6; creditors 9, 8, 4. Greedy makes five payments. Four suffice: 8→8, 7→9, 2 of the remaining 6→9, 4→4. Tests must preserve this counterexample. Exact combinatorial search is excluded from the core time box; the UI must not call the output the guaranteed minimum.
+Phase 5 implements exact maximum zero-sum partition search for <=10 nonzero members whose absolute balances fit the per-payment cap. This bounded case guarantees minimum count; independent exhaustive payment-state search and the known greedy counterexample test it. All other cases use deterministic greedy, explicitly without a global-minimum claim. Complexity and fallback limits are in docs/PHASE_5_REPORT.md. Suggestions never change balances.
+
+Greedy itself does not guarantee a minimum. Without a binding per-payment cap it matches largest debtor/creditor and clears at least one member per step, giving at most k-1 payments for k nonzero members. Capped chunks may require more. Example in poisha: debtors 8, 7, 6; creditors 9, 8, 4. Greedy makes five payments; four suffice: 8→8, 7→9, 2 of the remaining 6→9, 4→4. Tests retain this counterexample. The Phase 5 exact mode finds four here; only that bounded mode may claim minimum count.
 
 ## A4.6 One risky or missing requirement
 
@@ -46,8 +48,8 @@ Settlement recording does not establish that a transfer happened or the recipien
 
 - BDT only; multi-currency requires agreed FX and rounding policies before implementation.
 - One payer per expense. Payer may be excluded from participants.
-- Up to 100 active group members; no recurring expenses or exact settlement optimizer in core.
-- Bounded full-settlement reversal is the only corrective workflow added to core; no separate Balance or ExpenseRevision entity.
+- Up to 100 active group members; no recurring expenses. Phase 5 includes the explicitly approved bounded exact settlement optimizer; unbounded optimization remains excluded.
+- A bounded full-settlement reversal is the proposed corrective workflow for future approval, not an implemented Phase 5 feature. No separate Balance or ExpenseRevision entity is needed.
 - READ COMMITTED + consistent group-row lock for writes; short REPEATABLE READ snapshots for multi-query ledger reads.
 - Non-owner runtime credentials enforce append-only grants on Activity, Settlement and SettlementReversal; migrations/fixture cleanup use separate credentials.
 - Test, dev and migrate-dev shadow databases are distinct; real committed test fixtures are required for auth/concurrency testing.

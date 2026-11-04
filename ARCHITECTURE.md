@@ -1,6 +1,6 @@
 # FairShare — critically reviewed architecture
 
-**Reviewed design; Phases 1–4 implemented through persisted group balances.** Reviewed 4 November 2026 (Asia/Dhaka). Initial draft: docs/architecture-initial.md. Evidence: docs/PHASE_1_REPORT.md through docs/PHASE_4_REPORT.md. Settlement storage is read-only to the runtime; recording, reversals and suggestions below remain proposals. The user's latest phase numbering supersedes the original sequence. Further implementation requires explicit approval.
+**Reviewed design; Phases 1–5 implemented through settlement suggestions and recording.** Reviewed 4 November 2026 (Asia/Dhaka). Initial draft: docs/architecture-initial.md. Evidence: docs/PHASE_1_REPORT.md through docs/PHASE_5_REPORT.md. Reversals below remain proposed. The user's phase numbering supersedes the original sequence. Further implementation requires explicit approval.
 
 ## 1. Compatibility and observed runtime behavior
 
@@ -13,11 +13,13 @@
 | Prisma CLI / client / adapter-pg | **7.10.1 for all three** | Read-only npm metadata confirms packages exist; CLI Node range ^20.19 / ^22.12 / >=24 |
 | PostgreSQL | 18 | Local installed 18.1; deploy a maintained PostgreSQL 18 patch release |
 
-The selected combination is installed and runtime-verified for authentication, groups, expenses/splits and persisted balances. Active prisma/schema.prisma includes group-bound Expense/ExpenseSplit and read-only Settlement storage. Four additive migrations apply successfully, including from an empty test schema. The complete schema.proposal.prisma remains an unapplied reference for future settlement recording/reversal workflows. Versions are pinned; Prisma 8/RC APIs were not adopted.
+The selected combination is installed and runtime-verified for authentication, groups, expenses/splits, balances and settlement recording. Five migrations apply successfully, including from an empty test schema. Settlement storage is now append-only to the runtime: SELECT/INSERT, with UPDATE/DELETE/TRUNCATE revoked. The complete schema.proposal.prisma remains an unapplied reference for future reversal workflows. Versions are pinned; Prisma 8/RC APIs were not adopted.
 
 Phase 4 implementation: the pure engine credits payer/debits saved shares, adds settlement amounts to sender/subtracts from receiver, validates every expense sum and requires exact group zero. Group reads and cross-group current-user totals use RepeatableRead snapshots and the full ledger; dashboard debts and receivables remain separate across groups. Detailed DTOs expose paid/allocated/sent/received amounts and per-record contributions as explicit poisha strings. Invalid records fail visibly. No split recalculation, client financial values or cached balance columns are used.
 
-Removal now checks full-ledger zero balance under the shared group lock, superseding Phase 3's conservative involvement restriction. Historical corrections preserve each inactive member's per-expense contribution. Future settlement writers must also take the group lock. Current runtime settlement privileges are SELECT only: no recording service/action/UI, reversal or suggestion is shipped. Existing pg adapter deprecation behavior remains documented in the phase reports.
+Removal and settlement recording share the group lock. Historical expense corrections preserve each inactive member's contribution. Phase 5 recording authorizes an active sender/receiver/admin, checks active same-group counterparties and both outstanding bounds, inserts settlement/audit atomically and recalculates balances. Scoped request-key replays return the original record without another event; mismatched immutable fields conflict. Reversals remain outside scope. Existing pg adapter deprecation behavior remains documented.
+
+Phase 5 suggestions are read-only over the existing verified balance engine. Up to 10 nonzero members with individual absolute net <=100000000 poisha use exact maximum zero-sum partition DP; minimum transfers = nonzero members minus maximum partitions. Time O(3^n), space O(2^n). Larger groups/amounts fall back to deterministic largest-debtor/creditor greedy matching, capped per payment and labelled not guaranteed minimum. Greedy costs O(P n log n) time/O(n+P) space and returns at most 1000 payments. A complete replay validates positivity, no self-payment, both outstanding bounds and final zero before any plan is returned. Suggestions are never persisted as completed payments.
 
 Runtime finding: Prisma pg 7.10.1 requires an explicit UTC connection timezone on this Dhaka-configured PostgreSQL cluster to preserve timestamptz expiry instants. src/lib/db/prisma.ts sets it; the retained expiration regression passes. See [upstream issue](https://github.com/prisma/orm/issues/28629).
 
@@ -109,7 +111,7 @@ Allocate by largest remainder, with a stable-ID ordering rotated by server-assig
 
 A pays 100 and A/B share 50 each => A +50, B −50. B pays A 50 => both zero. Reversing that recorded payment restores the original balances. Include inactive members in the ledger, assert sum == 0n and fail visibly on corruption. Suggestions must use the full ledger, not a paginated subset.
 
-Greedy largest-debtor/largest-creditor matching is deterministic and clears k nonzero balances in at most k−1 positive non-self payments; it is not globally optimal. Counterexample debtors 8,7,6 / creditors 9,8,4 takes five greedy payments, while four suffice. Exact search is outside core.
+Greedy largest-debtor/largest-creditor matching is deterministic and, without a binding payment cap, clears k nonzero balances in at most k−1 positive non-self payments; it is not globally optimal. Capped chunks can add payments. Counterexample debtors 8,7,6 / creditors 9,8,4 takes five greedy payments, while four suffice. Phase 5's bounded exact mode finds four; its threshold, proof and fallback behavior are documented in docs/PHASE_5_REPORT.md.
 
 ## 6. Server-side permission boundaries
 
@@ -184,4 +186,4 @@ Server pages call authorized queries/services and receive minimal DTOs. Client f
 5. Feature UI: Tailwind/shadcn/RHF, required screens, recent dashboard activity, pagination, accessibility/mobile/errors/confirmations.
 6. Final verification/submission: typecheck/lint/Vitest/build/browser flow, factual AI log and candidate-reviewed answers, <=5-minute recording, secret review/commits, approved repo publication, optional deployment only after its security/operations gates.
 
-After each phase: report files/decisions, exact check results, security/diff review, limits and proposed next phase; **wait for explicit approval**. No implementation starts from this review alone. Dark mode, recurring bills, multiple currencies/payers, exact optimizer, balance caches and custom distributed limiter infrastructure stay outside core. See plan.md and DECISIONS.md.
+After each phase: report files/decisions, exact check results, security/diff review, limits and proposed next phase; **wait for explicit approval**. No implementation starts from this review alone. Dark mode, recurring bills, multiple currencies/payers, unbounded exact optimization, balance caches and custom distributed limiter infrastructure stay outside core. Phase 5's explicitly approved bounded exact planner is the documented exception. See plan.md and DECISIONS.md.

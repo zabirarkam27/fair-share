@@ -1,5 +1,13 @@
 # Actual AI usage log (in progress)
 
+## Latest evidence — Phase 5 after explicit approval
+
+First completed the user's single-branch request: safely fast-forwarded Phase 4 onto codex/phase-1-auth, pushed it, and removed only the fully consolidated Phase 4 branch. Then implemented only approved settlement suggestions/recording on the original branch. Codex authored a pure greedy planner, bounded exact zero-sum partition DP, independent replay checks, authorized snapshot reads, locked idempotent append-only recording/audit/recalculation and RHF/Zod dialogs. Suggestions never write settlements. No new packages or subagents were used.
+
+Actual corrections: TypeScript caught Object.freeze's generic inference in a test callback; changed it to an explicit arrow. ESLint caught JSX constructed inside try/catch; fetching and rendering are now separate. The owned PostgreSQL process had stopped between turns; its existing data directory was restarted and recovered without a reset. The failed migration-check attempt was rerun successfully. Browser fixtures used only isolated test storage. The older SELECT-only settlement test was deliberately updated to the newly approved append-only privilege contract; UPDATE/DELETE and SQL reference checks remain enforced.
+
+Final results: 104 unit tests (15 new planner tests), 108 PostgreSQL integration tests (29 new settlement cases), TypeScript, zero-warning ESLint, production build and all five clean-schema migrations pass. The exact planner agrees with an independent exhaustive payment-state search on 27 tiny ledgers, the known five-greedy/four-exact counterexample, the ten-member boundary and 1000 generated scenarios. Browser recording reduced a fixture's 600 BDT obligation to 400 after a 200 Bank payment, then zero after a 400 bKash payment, preserving the pre-existing 400 Cash record. The two fixture accounts/group and temporary test server were cleaned up; the normal user session was left intact. Code commit: 3067153. Phase 5 has not been pushed; await approval.
+
 ## Latest evidence — Phase 4 after explicit approval
 
 Subsequent publication update: the user explicitly requested another check, commit and push. All 89 unit tests, 79 PostgreSQL integration tests, TypeScript, zero-warning ESLint, production build and four clean-schema migrations passed again. The initial build exited without diagnostic; a fresh captured build passed without changing application code. Pushed the existing Phase 4 commits to `origin/codex/phase-4-balances` and committed these publication notes separately. The phase-completion paragraph below describes the earlier local-only state. No merge, deployment or new financial feature was added.

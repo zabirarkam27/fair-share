@@ -1,6 +1,6 @@
-# FairShare — Phase 4
+# FairShare — Phase 5
 
-Authentication, groups/authorization, four exact expense split methods and persisted group balance calculation. Money uses BigInt poisha. Dashboard totals and group breakdowns use authorized consistent database reads. Settlement records can be read; recording, reversals and settlement suggestions are **not implemented**. The reference build remains at `reference/pre-phase1/` and checkpoint `519735d`; its database was not reset or imported.
+Authentication, groups/authorization, four expense split methods, persisted balances, payment suggestions and completed-settlement recording. Money uses BigInt poisha. Suggestions do not change balances; recorded settlements do. Reversals remain unimplemented. The reference build remains at `reference/pre-phase1/` and checkpoint `519735d`; its database was not reset or imported.
 
 ## Stack
 
@@ -41,7 +41,7 @@ Copy `.env.example` to `.env.local` and supply real, separately provisioned URLs
 | BETTER_AUTH_SECRET | Cryptographically random secret, at least 32 characters |
 | BETTER_AUTH_URL | Exact trusted origin; local http://127.0.0.1:3000 |
 
-Migration commands use Prisma `migrate deploy`; they do not reset a database. Four migrations add auth, groups/memberships/activity, expenses/splits, then settlement storage for balance reads. The runtime role has SELECT only on settlements. Settlement recording/reversal workflows in `prisma/schema.proposal.prisma` remain an inactive reference; do not replace the applied schema with that file.
+Migration commands use Prisma `migrate deploy`; they do not reset a database. Five migrations cover auth, groups, expenses, settlement storage and settlement audit events. Runtime settlement privileges are SELECT/INSERT only; UPDATE/DELETE/TRUNCATE remain revoked. Reversals in `prisma/schema.proposal.prisma` remain an inactive reference; do not replace the applied schema with that file.
 
 ## Authentication and routes
 
@@ -79,7 +79,13 @@ Dashboard cards separately total what you owe and what you are owed across activ
 
 All related records are collected within a RepeatableRead transaction. Balances use the entire ledger, not the 25-row expense page. Invalid saved allocations fail visibly as “Balances unavailable”; they do not become fabricated zero balances. Money DTOs use decimal integer strings. No balance cache or manually editable balance column exists. See [Phase 4 results](docs/PHASE_4_REPORT.md) for actual evidence and corrections to the supplied example arithmetic/units.
 
-Settlement storage is present to support these reads, with positive/nonself/group-bound constraints. There is no settlement creation action/API/UI in this phase. Integration/browser fixtures insert recorded settlements using only the isolated test maintenance role; they do not represent a shipped recording workflow.
+## Payment suggestions and recording
+
+Group pages suggest same-group debtor-to-creditor payments from the verified full ledger. Viewing suggestions never records a payment or changes balances. An independent check ensures every suggested amount is positive, nonself, within both current amounts and clears the ledger when all suggestions are applied.
+
+For up to 10 nonzero members whose individual balances fit the BDT 1,000,000 payment cap, exact zero-sum partition search finds the minimum payment count. Larger groups or larger individual balances use deterministic largest-debtor/creditor greedy matching, explicitly labelled as not guaranteed minimum. Large obligations are split into recordable capped amounts; plans beyond 1000 payments fail visibly. Exact search is O(3^n) time/O(2^n) space; greedy is O(P n log n) time/O(n+P) space for P payments. See [the Phase 5 report](docs/PHASE_5_REPORT.md) for proof, thresholds and tests.
+
+Sender, receiver or group admin can record an already-completed payment, including a partial amount, with bKash, Cash or Bank labels. The server locks the group, rechecks session membership/authority and current debt/credit, inserts the immutable settlement/audit atomically and recalculates balances. A scoped request key makes retries idempotent; changed payloads under an existing key conflict. This records a user's assertion that money was paid; it does not transfer funds or verify bank/bKash receipts. Distinct keys or people can still make duplicate real-world claims while debt remains; receiver confirmation/disputes and reversals remain future scope.
 
 ## Demo accounts
 
@@ -114,8 +120,8 @@ Webpack is explicitly selected because this sandbox blocked Turbopack junction c
 
 ## Phase boundary and known limits
 
-Groups, expenses, four split methods and group balances are implemented. Settlement recording, reversals and suggestions await approval. All verified phases use the existing default branch [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth), following the user's single-branch preference. No deployment or assessment submission has occurred. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; all checks pass, and pg 9 requires compatibility review.
+Phases through settlement suggestions/recording are implemented. Reversals and further work await approval. All work uses the existing [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth) branch. Phases 1–4 are pushed; Phase 5 is verified and committed locally, awaiting review before publication. No deployment or assessment submission has occurred. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; all checks pass, and pg 9 requires compatibility review.
 
 ESLint 9.39.5 is retained for the declared peer ranges of Next 16.4.5's lint plugins; npm marks that ESLint line unsupported. ESLint 10 executed locally but produced transitive peer conflicts, so it was not left as an unsupported combination. Revisit the lint toolchain together when Next's plugins support it. shadcn is development tooling, not a runtime dependency; its transitive audit advisories are reported in the phase report. Do not apply npm's suggested major downgrade blindly.
 
-See [Phase 4 results](docs/PHASE_4_REPORT.md), [Phase 3 history](docs/PHASE_3_REPORT.md), [Phase 2 history](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.
+See [Phase 5 results](docs/PHASE_5_REPORT.md), [Phase 4 history](docs/PHASE_4_REPORT.md), [Phase 3 history](docs/PHASE_3_REPORT.md), [Phase 2 history](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.

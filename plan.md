@@ -1,6 +1,6 @@
 # FairShare approval-gated plan
 
-Current status: **Phase 4 — Group Balance Calculation implemented and verified; awaiting explicit approval.** Settlement storage is read-only to the application; settlement recording, reversals and suggestions were not implemented.
+Current status: **Phase 5 — Settlement Suggestions and Recording implemented and verified; awaiting explicit approval.** Work remains on `codex/phase-1-auth`; Phase 5 is committed locally and not pushed. Reversals and later phases remain unimplemented.
 
 ## Completed foundations
 
@@ -52,11 +52,25 @@ See docs/PHASE_2_REPORT.md for historical evidence. Leave, admin transfer and re
 - [x] Required scenarios, including separately documented corrections to scenarios 1 and 2.
 - [x] 89 unit tests, 79 PostgreSQL integration tests, TypeScript, ESLint, production build and all four clean-schema migrations pass.
 - [x] Browser shows +600/−600 BDT and exact zero after a persisted 400 BDT settlement against a 1000 BDT expense.
-- [ ] User reviews docs/PHASE_4_REPORT.md and approves any later work.
+- [x] User approved Phase 5 settlement suggestions and recording only.
+
+## Phase 5 — completed approved scope
+
+- [x] Pure deterministic greedy and bounded exact planners with independent complete-plan verification.
+- [x] Exact optimization <=10 nonzero members within per-payment cap; truthful greedy fallback and complexity labels.
+- [x] Read-only suggestions from persisted full-group balances, never client monetary values.
+- [x] Partial/full completed payment recording with bKash/Cash/Bank labels.
+- [x] Session-derived sender/receiver/admin authority, same-group active members, locked current debt/credit limits.
+- [x] Atomic append-only settlement/audit, scoped idempotency and balance recalculation.
+- [x] Required cases plus concurrent duplicate/overpayment, stale-plan, removal-race, immutability and rollback tests.
+- [x] 104 unit tests, 108 PostgreSQL integration tests, TypeScript, ESLint, production build and all five clean-schema migrations pass.
+- [x] Exact planner matches independent exhaustive search on 27 tiny ledgers; 1000 generated cases verify cleared balances.
+- [x] Browser partial 200 BDT and remaining 400 BDT recordings reduce 600→400→0; history labels and responsive form verified.
+- [ ] User reviews docs/PHASE_5_REPORT.md and explicitly approves further work/publication.
 
 ## Future work — proposals, not authorization
 
-Settlement suggestions, recording payments and reversals need separate approval. Future settlement writers must share the group lock, authenticate involved-party/admin authority, validate current balances, preserve inactive-member net deltas and commit idempotent records/audit atomically. Suggestions must use the complete verified ledger and make no unsupported minimum-payment claim. After the verified Phase 4 push, the user requested a single branch: all Phase 4 commits are consolidated by fast-forward onto `codex/phase-1-auth`; future approved work stays on that branch.
+Reversals, recipient confirmation/disputes and later features need separate approval. Reversal writers must share the group lock, preserve inactive-member deltas and commit immutable correction/audit records atomically. All approved work remains on the original branch; the redundant Phase 4 branch was removed after its history was safely consolidated and pushed.
 
 The full Prisma proposal is an entity design reference, not a file to copy over the applied schema. Retain active table mappings and migration history while adding explicitly approved entities. Shared invitation throttling, log redaction, recovery/verification, retention and operational hardening remain deployment gates.
 
