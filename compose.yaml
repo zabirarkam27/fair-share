@@ -1,0 +1,18 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: fairshare
+      POSTGRES_USER: fairshare
+      POSTGRES_PASSWORD: fairshare_local_only
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - fairshare_pg:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fairshare -d fairshare"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+volumes:
+  fairshare_pg:

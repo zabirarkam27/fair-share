@@ -1,0 +1,16 @@
+CREATE TABLE "user" (id text PRIMARY KEY,name text NOT NULL,email text NOT NULL UNIQUE,"emailVerified" boolean NOT NULL DEFAULT false,image text,"createdAt" timestamp NOT NULL DEFAULT now(),"updatedAt" timestamp NOT NULL DEFAULT now());
+CREATE TABLE session (id text PRIMARY KEY,"expiresAt" timestamp NOT NULL,token text NOT NULL UNIQUE,"createdAt" timestamp NOT NULL DEFAULT now(),"updatedAt" timestamp NOT NULL DEFAULT now(),"ipAddress" text,"userAgent" text,"userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE);
+CREATE INDEX session_user_idx ON session("userId");
+CREATE TABLE account (id text PRIMARY KEY,"accountId" text NOT NULL,"providerId" text NOT NULL,"userId" text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,"accessToken" text,"refreshToken" text,"idToken" text,"accessTokenExpiresAt" timestamp,"refreshTokenExpiresAt" timestamp,scope text,password text,"createdAt" timestamp NOT NULL DEFAULT now(),"updatedAt" timestamp NOT NULL DEFAULT now());
+CREATE INDEX account_user_idx ON account("userId");
+CREATE TABLE verification (id text PRIMARY KEY,identifier text NOT NULL,value text NOT NULL,"expiresAt" timestamp NOT NULL,"createdAt" timestamp NOT NULL DEFAULT now(),"updatedAt" timestamp NOT NULL DEFAULT now());
+CREATE INDEX verification_identifier_idx ON verification(identifier);
+CREATE TABLE groups (id text PRIMARY KEY,name text NOT NULL,description text NOT NULL DEFAULT '',"inviteToken" text NOT NULL UNIQUE,"createdAt" timestamp NOT NULL DEFAULT now());
+CREATE TABLE members ("groupId" text NOT NULL REFERENCES groups(id) ON DELETE CASCADE,"userId" text NOT NULL REFERENCES "user"(id),role text NOT NULL CHECK(role IN ('admin','member')),active boolean NOT NULL DEFAULT true,"joinedAt" timestamp NOT NULL DEFAULT now(),PRIMARY KEY("groupId","userId"));
+CREATE INDEX members_user_idx ON members("userId");
+CREATE TABLE expenses (id text PRIMARY KEY,"groupId" text NOT NULL REFERENCES groups(id) ON DELETE CASCADE,description text NOT NULL,amount integer NOT NULL CHECK(amount BETWEEN 1 AND 100000000),date text NOT NULL,"paidBy" text NOT NULL REFERENCES "user"(id),"createdBy" text NOT NULL REFERENCES "user"(id),"splitType" text NOT NULL CHECK("splitType" IN ('equal','exact','percentage','shares')),inputs jsonb NOT NULL,allocations jsonb NOT NULL,version integer NOT NULL DEFAULT 1,"createdAt" timestamp NOT NULL DEFAULT now(),"updatedAt" timestamp NOT NULL DEFAULT now());
+CREATE INDEX expenses_group_idx ON expenses("groupId","createdAt");
+CREATE TABLE settlements (id text PRIMARY KEY,"groupId" text NOT NULL REFERENCES groups(id) ON DELETE CASCADE,"fromId" text NOT NULL REFERENCES "user"(id),"toId" text NOT NULL REFERENCES "user"(id),amount integer NOT NULL CHECK(amount BETWEEN 1 AND 100000000),method text NOT NULL CHECK(method IN ('bKash','Cash','Bank')),"createdBy" text NOT NULL REFERENCES "user"(id),"createdAt" timestamp NOT NULL DEFAULT now(),CHECK("fromId"<>"toId"));
+CREATE INDEX settlements_group_idx ON settlements("groupId");
+CREATE TABLE activity (id text PRIMARY KEY,"groupId" text NOT NULL REFERENCES groups(id) ON DELETE CASCADE,"actorId" text NOT NULL REFERENCES "user"(id),action text NOT NULL,"entityId" text NOT NULL,before jsonb,after jsonb,"createdAt" timestamp NOT NULL DEFAULT now());
+CREATE INDEX activity_group_idx ON activity("groupId","createdAt");

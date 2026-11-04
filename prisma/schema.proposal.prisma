@@ -1,0 +1,237 @@
+// INACTIVE DESIGN PROPOSAL — no database migration has been applied.
+// Reviewed target: Prisma CLI/client/adapter-pg 7.10.1; Better Auth 1.7.16.
+// Static proposal only: CLI validation/generation/runtime tests require approval.
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Connection URL belongs in version-appropriate Prisma config, not source.
+}
+
+enum GroupRole {
+  ADMIN
+  MEMBER
+}
+
+enum MemberStatus {
+  ACTIVE
+  LEFT
+  REMOVED
+}
+
+enum SplitType {
+  EQUAL
+  EXACT
+  PERCENTAGE
+  SHARES
+}
+
+enum PaymentMethod {
+  BKASH
+  CASH
+  BANK
+}
+
+enum ActivityType {
+  GROUP_CREATED
+  GROUP_DELETED
+  INVITE_ROTATED
+  MEMBER_JOINED
+  MEMBER_LEFT
+  MEMBER_REMOVED
+  MEMBER_REACTIVATED
+  EXPENSE_CREATED
+  EXPENSE_EDITED
+  EXPENSE_DELETED
+  SETTLEMENT_RECORDED
+  SETTLEMENT_REVERSED
+}
+
+// Better Auth owns these models; confirm generated requirements with its CLI.
+model User {
+  id            String        @id
+  name          String
+  email         String        @unique
+  emailVerified Boolean       @default(false)
+  image         String?
+  createdAt     DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime      @updatedAt @db.Timestamptz(3)
+  sessions      Session[]
+  accounts      Account[]
+  memberships   GroupMember[]
+  activities    Activity[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @db.Timestamptz(3)
+  token     String   @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@unique([providerId, accountId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+  @@index([identifier])
+}
+
+model Group {
+  id              String       @id @default(uuid()) @db.Uuid
+  name            String       @db.VarChar(80)
+  description     String       @default("") @db.VarChar(240)
+  inviteTokenHash  String?      @unique @db.VarChar(64)
+  inviteExpiresAt DateTime?    @db.Timestamptz(3)
+  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
+  deletedAt       DateTime?    @db.Timestamptz(3)
+  members         GroupMember[]
+  expenses        Expense[]
+  settlements     Settlement[]
+  reversals       SettlementReversal[]
+  activities      Activity[]
+}
+
+model GroupMember {
+  groupId           String         @db.Uuid
+  userId            String
+  role              GroupRole      @default(MEMBER)
+  status            MemberStatus   @default(ACTIVE)
+  joinedAt          DateTime       @default(now()) @db.Timestamptz(3)
+  departedAt        DateTime?      @db.Timestamptz(3)
+  group             Group          @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  user              User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  paidExpenses      Expense[]      @relation("ExpensePayer")
+  addedExpenses     Expense[]      @relation("ExpenseAuthor")
+  splits            ExpenseSplit[]
+  sentSettlements   Settlement[]   @relation("SettlementSender")
+  receivedPayments  Settlement[]   @relation("SettlementReceiver")
+  recordedPayments  Settlement[]   @relation("SettlementRecorder")
+  recordedReversals SettlementReversal[]
+  @@id([groupId, userId])
+  @@index([userId, status, groupId])
+}
+
+model Expense {
+  id          String         @id @default(uuid()) @db.Uuid
+  groupId     String         @db.Uuid
+  description String         @db.VarChar(160)
+  amount      BigInt
+  date        DateTime       @db.Date
+  paidById    String
+  createdById String
+  splitType   SplitType
+  version     Int            @default(1)
+  requestKey  String         @db.Uuid
+  createFingerprint String   @db.VarChar(64)
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime       @updatedAt @db.Timestamptz(3)
+  deletedAt   DateTime?      @db.Timestamptz(3)
+  group       Group          @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  payer       GroupMember    @relation("ExpensePayer", fields: [groupId, paidById], references: [groupId, userId], onDelete: Restrict, onUpdate: NoAction)
+  author      GroupMember    @relation("ExpenseAuthor", fields: [groupId, createdById], references: [groupId, userId], onDelete: Restrict, onUpdate: NoAction)
+  splits      ExpenseSplit[]
+  @@unique([groupId, id])
+  @@unique([groupId, createdById, requestKey])
+  @@index([groupId, deletedAt, date, id])
+  @@index([groupId, paidById])
+}
+
+model ExpenseSplit {
+  expenseId       String      @db.Uuid
+  groupId         String      @db.Uuid
+  userId          String
+  amount          BigInt
+  // Original validated units: poisha for EXACT; basis points for PERCENTAGE;
+  // positive integer weights for SHARES; null for EQUAL.
+  inputUnits      BigInt?
+  expense         Expense     @relation(fields: [groupId, expenseId], references: [groupId, id], onDelete: Restrict, onUpdate: NoAction)
+  member          GroupMember @relation(fields: [groupId, userId], references: [groupId, userId], onDelete: Restrict, onUpdate: NoAction)
+  @@id([expenseId, userId])
+  @@index([groupId, userId])
+}
+
+model Settlement {
+  id          String        @id @default(uuid()) @db.Uuid
+  groupId     String        @db.Uuid
+  fromId      String
+  toId        String
+  createdById String
+  amount      BigInt
+  method      PaymentMethod
+  requestKey  String        @db.Uuid
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  group       Group         @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  sender      GroupMember   @relation("SettlementSender", fields: [groupId, fromId], references: [groupId, userId], onDelete: Restrict, onUpdate: NoAction)
+  receiver    GroupMember   @relation("SettlementReceiver", fields: [groupId, toId], references: [groupId, userId], onDelete: Restrict, onUpdate: NoAction)
+  recorder    GroupMember   @relation("SettlementRecorder", fields: [groupId, createdById], references: [groupId, userId], onDelete: Restrict, onUpdate: NoAction)
+  reversal    SettlementReversal?
+  @@unique([groupId, id])
+  @@unique([groupId, createdById, requestKey])
+  @@index([groupId, createdAt, id])
+  @@index([groupId, fromId])
+  @@index([groupId, toId])
+}
+
+// Append-only correction: reverse the entire recorded payment, then re-record
+// the correct payment if necessary. No independent amount or payer fields.
+model SettlementReversal {
+  id           String      @id @default(uuid()) @db.Uuid
+  groupId      String      @db.Uuid
+  settlementId String      @db.Uuid
+  createdById  String
+  reason       String      @db.VarChar(240)
+  createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+  group        Group       @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  settlement   Settlement  @relation(fields: [groupId, settlementId], references: [groupId, id], onDelete: Restrict, onUpdate: NoAction)
+  recorder     GroupMember @relation(fields: [groupId, createdById], references: [groupId, userId], onDelete: Restrict, onUpdate: NoAction)
+  @@unique([groupId, settlementId])
+  @@index([groupId, createdAt, id])
+  @@index([groupId, createdById])
+}
+
+model Activity {
+  id         String       @id @default(uuid()) @db.Uuid
+  groupId    String       @db.Uuid
+  actorId    String
+  actorName  String       // Snapshot compatible with Better Auth's name field.
+  schemaVersion Int      @default(1)
+  type       ActivityType
+  entityId   String
+  before     Json?        // Monetary BigInt values encoded as strings.
+  after      Json?
+  createdAt  DateTime     @default(now()) @db.Timestamptz(3)
+  group      Group        @relation(fields: [groupId], references: [id], onDelete: Restrict)
+  actor      User         @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@index([groupId, createdAt, id])
+}

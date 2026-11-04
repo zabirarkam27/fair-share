@@ -1,0 +1,503 @@
+# FAIRSHARE - MASTER DEVELOPMENT INSTRUCTIONS
+
+## Project Overview
+
+Build a production-minded full-stack shared expense management application named **FairShare**.
+
+FairShare allows flatmates, friends, and travel groups to manage shared expenses, calculate individual balances, and settle debts accurately.
+
+This is a hiring assessment, not a CRUD demonstration. Prioritize business logic, financial accuracy, server-side security, maintainability, and test coverage over unnecessary features.
+
+## 1. Your Role
+
+Act as a Senior Full-Stack Engineer, Software Architect, Database Designer, and Security Reviewer.
+
+You must:
+
+- Understand the entire application before implementation.
+- Make sensible technical decisions.
+- Write maintainable, modular, type-safe code.
+- Never sacrifice financial correctness for implementation speed.
+- Never trust client-side validation.
+- Write tests for critical business logic.
+- Explain important architectural decisions.
+- Avoid unnecessary abstractions and overengineering.
+- Keep implementation within the assessment's time constraints.
+
+Do not blindly implement requirements. Identify ambiguities, security risks, edge cases, and missing requirements.
+
+## 2. Required Technology Stack
+
+Use the following stack:
+
+### Frontend
+- Next.js with App Router
+- TypeScript with strict mode
+- Tailwind CSS
+- shadcn/ui
+- Lucide React
+- React Hook Form
+- Zod
+- Recharts, only where useful
+
+### Backend
+- Next.js Server Actions for application mutations.
+- Next.js Route Handlers where an HTTP endpoint is appropriate.
+- Never create a separate Express server unless there is a strong documented reason.
+- Keep business logic outside React components and Server Actions.
+
+### Database
+- PostgreSQL
+- Prisma ORM
+
+### Authentication
+- Better Auth
+- Email/password authentication
+- Secure session management
+
+### Testing
+- Vitest for unit and integration tests.
+- Use an appropriate PostgreSQL test database for database integration tests.
+
+## 3. Architecture Principles
+
+Use a feature-oriented modular architecture.
+
+Separate:
+
+1. UI components
+2. Server Actions
+3. Business logic/services
+4. Database access
+5. Validation schemas
+6. Authentication and authorization
+7. Shared utilities
+8. Tests
+
+Suggested structure:
+
+src/
+  app/
+    (auth)/
+    (dashboard)/
+    join/
+    api/
+  components/
+    ui/
+    shared/
+    layout/
+  features/
+    auth/
+    groups/
+    expenses/
+    balances/
+    settlements/
+    activities/
+  lib/
+    auth/
+    db/
+    permissions/
+    validations/
+    utils/
+  services/
+    group.service.ts
+    expense.service.ts
+    balance.service.ts
+    settlement.service.ts
+    activity.service.ts
+  types/
+
+prisma/
+  schema.prisma
+  seed.ts
+
+tests/
+  unit/
+  integration/
+
+Keep the structure practical. Do not create files or abstractions without a purpose.
+
+## 4. Critical Financial Rules
+
+These rules are non-negotiable.
+
+### Money Representation
+
+- Never use JavaScript floating-point arithmetic for financial calculations.
+- Represent money internally as integer poisha.
+- ৳1 = 100 poisha.
+- Validate that monetary inputs have no more than two decimal places.
+- Use PostgreSQL BIGINT or an explicitly safe integer representation for stored poisha.
+- Handle JavaScript BigInt serialization correctly.
+- Never convert financial amounts into floating-point numbers for business calculations.
+
+### Split Calculation
+
+Implement four split types:
+
+1. EQUAL
+2. EXACT
+3. PERCENTAGE
+4. SHARES
+
+All calculation functions must be pure, independently testable, and deterministic.
+
+EQUAL:
+- Divide total poisha by the number of included members.
+- Distribute remainder poisha deterministically.
+- Rotate remainder priority using a stable expense-specific ordering so the same person does not always receive the extra poisha.
+
+EXACT:
+- Every member's specified share must be non-negative.
+- The sum of all shares must equal the expense total exactly.
+
+PERCENTAGE:
+- Percentages must be valid and sum to exactly 100%.
+- Use integer-based percentage representation with adequate precision.
+- Calculate shares using integer arithmetic.
+- Distribute rounding remainder deterministically.
+- The final shares must equal the expense total.
+
+SHARES:
+- Each member must have a positive integer share weight.
+- Divide the total proportionally.
+- Distribute remainder poisha deterministically.
+- Final shares must equal the expense total.
+
+### Balance Calculation
+
+For every expense:
+
+- The payer receives credit for the full expense amount.
+- Each included member receives a debit equal to their allocated share.
+- Excluded members receive no debit.
+
+For every settlement:
+
+- The sender receives a positive balance adjustment.
+- The receiver receives a negative balance adjustment.
+
+Define and document one consistent sign convention.
+
+The sum of all member balances in a group must always equal zero.
+
+### Important
+
+Never store a manually editable balance as the financial source of truth.
+
+Calculate balances from expenses and settlements. Use caching only if correctness and invalidation are properly handled.
+
+## 5. Security Rules
+
+Every server-side operation must independently verify:
+
+- Authenticated session
+- User identity
+- Group membership
+- Group role
+- Resource ownership
+- Group/resource relationship
+
+Never rely on:
+
+- Hidden buttons
+- Frontend route protection alone
+- Client-provided user IDs
+- Client-provided roles
+- Client-provided group membership
+- Unverified resource IDs
+
+Use the authenticated session as the source of user identity.
+
+A normal member may:
+- Add expenses.
+- Edit their own expenses.
+- Delete their own expenses.
+- View authorized group information.
+
+An admin may:
+- Perform all group administration actions.
+- Edit and delete any group expense.
+- Remove members.
+- Delete the group.
+
+Validate every mutation with Zod.
+
+Use database transactions for operations that must succeed or fail together.
+
+## 6. Required Features
+
+### Authentication
+- Sign up
+- Sign in
+- Sign out
+- Session persistence
+- Protected dashboard routes
+
+### Groups
+- Create group
+- View groups
+- Group details
+- Generate secure invite link
+- Join using invite link
+- Member list
+- Admin/member roles
+- Remove member
+- Delete group
+
+### Expenses
+- Create expense
+- Edit expense
+- Delete expense
+- Description
+- Amount
+- Date
+- Payer
+- Included members
+- Four split types
+- Expense details
+
+### Balances
+- Individual net balance
+- Owed/owing status
+- Detailed expense breakdown
+- Group zero-sum invariant
+
+### Settlement
+- Suggested payments
+- Record settlement
+- bKash, Cash, Bank payment labels
+- Settlement history
+- Correct balance adjustments
+
+### Activity
+- Expense created
+- Expense edited
+- Expense deleted
+- Settlement recorded
+- Member joined/removed
+- Group created/deleted where applicable
+- Old and new values for edits
+
+### Dashboard
+- Total amount owed
+- Total amount owed to the user
+- Per-group summary
+- Recent activity
+- Quick actions
+
+## 7. Settlement Algorithm
+
+Implement a deterministic debt-settlement algorithm.
+
+Requirements:
+
+- Identify debtors and creditors.
+- Match outstanding debts against outstanding credits.
+- Generate valid payment suggestions.
+- Ensure all suggested payments settle the group's net balances.
+- Avoid self-payments.
+- Never generate zero or negative payments.
+- Use integer poisha only.
+
+Use a greedy settlement strategy for larger groups.
+
+Document honestly that greedy settlement does not guarantee globally minimum transactions in every possible case.
+
+If implementing exact minimum transactions for small groups, use a bounded exact optimization strategy and a documented fallback for larger groups.
+
+Never claim global optimality unless the algorithm actually guarantees it.
+
+## 8. Activity History
+
+Use immutable activity records.
+
+For expense edits:
+- Preserve old values.
+- Preserve new values.
+- Record actor.
+- Record timestamp.
+- Record the related expense ID.
+
+Deleting an expense must not delete its historical audit records.
+
+Use database transactions for related operations.
+
+## 9. UI/UX Requirements
+
+Build a clean, modern, professional finance dashboard.
+
+Visual direction:
+
+- Minimalist fintech interface
+- Excellent spacing and typography
+- Responsive design
+- Clear visual hierarchy
+- Accessible components
+- Consistent design tokens
+- Light and dark mode if time permits
+
+Required screens:
+
+1. Landing / authentication
+2. Dashboard
+3. Groups list
+4. Group details
+5. Add expense
+6. Edit expense
+7. Expense details
+8. Balance overview
+9. Settlement screen
+10. Activity history
+11. Group settings
+12. Join group flow
+
+UI requirements:
+
+- Loading states
+- Empty states
+- Error states
+- Success feedback
+- Form validation messages
+- Confirmation dialogs for destructive actions
+- Responsive mobile layouts
+
+Do not spend excessive time on animation or decorative elements.
+
+## 10. Documentation
+
+Maintain these files:
+
+README.md
+DECISIONS.md
+AI_LOG.md
+ANSWERS.md
+.env.example
+AGENTS.md
+plan.md
+
+README must include:
+- Project overview
+- Technology stack
+- Installation
+- Environment configuration
+- Database migration
+- Seed instructions
+- Demo login credentials
+- Running tests
+- Deployment instructions
+
+DECISIONS.md must answer all six A4 questions.
+
+AI_LOG.md must record actual AI usage, actual mistakes, prompts, and manually implemented work. Never fabricate AI interactions.
+
+ANSWERS.md must contain thoughtful answers to all three Part C questions, approximately 120 words each.
+
+## 11. Development Workflow
+
+Work phase by phase.
+
+Before implementation:
+
+1. Inspect the existing repository.
+2. Identify existing code and dependencies.
+3. Prepare the technical architecture.
+4. Define the Prisma schema.
+5. Write DECISIONS.md.
+6. Create plan.md.
+7. Create AGENTS.md.
+
+Do not immediately generate the entire application.
+
+After each phase:
+
+1. Run TypeScript checks.
+2. Run ESLint.
+3. Run relevant tests.
+4. Inspect security implications.
+5. Review changed files.
+6. Report completed work.
+7. Report remaining issues.
+8. Wait for my approval before starting the next phase.
+
+Do not hide failed tests or suppress TypeScript errors to make the build pass.
+
+## 12. Git Workflow
+
+Use small, meaningful commits.
+
+Suggested commit sequence:
+
+- chore: initialize project
+- chore: configure database and authentication
+- feat: implement group management
+- feat: implement expense splitting engine
+- feat: implement balance calculation
+- feat: implement settlement workflow
+- feat: implement activity history
+- feat: build dashboard
+- test: add financial logic and security tests
+- docs: complete assessment documentation
+
+Never commit secrets, .env files, database credentials, or private tokens.
+
+## 13. Final Quality Gate
+
+Before declaring the project complete, verify:
+
+- Authentication works.
+- Group isolation works.
+- Admin permissions work.
+- Member permissions work.
+- All four split types work.
+- All financial calculations use exact poisha.
+- All splits add up to the original expense.
+- Every group balance sums to zero.
+- Settlement suggestions clear all net balances.
+- Settlement recording works.
+- Activity history preserves old values.
+- Unauthorized access is rejected.
+- Server-side validation is enforced.
+- Tests pass.
+- Production build succeeds.
+- Documentation is complete.
+
+Do not claim completion if any critical requirement is unverified.
+
+## 14. Communication Style
+
+Be concise and technical.
+
+For every phase, report:
+
+- What you implemented
+- Important design decisions
+- Files created or modified
+- Tests executed
+- Test results
+- Known limitations
+- Next proposed phase
+
+Explain complex logic in plain language so the developer can understand and defend the implementation during a technical interview.
+
+## FIRST TASK
+
+Do not start coding yet.
+
+Inspect the current repository and prepare:
+
+1. Architecture proposal
+2. Database entity relationship design
+3. Prisma schema proposal
+4. Folder structure
+5. Server Action and service boundaries
+6. Security strategy
+7. Financial calculation strategy
+8. Testing strategy
+9. Initial DECISIONS.md
+10. Initial plan.md
+11. Initial AGENTS.md
+
+Identify risks and contradictions in the assessment.
+
+Present your architecture and wait for my approval before implementation.

@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env*
+!.env.example
+.local/
+*.tsbuildinfo
+tmp/
+assessment-page.png
+artifacts/
