@@ -398,7 +398,7 @@ describe("persisted group balances — real PostgreSQL and authenticated session
       ga.remove({ groupId, memberId: accounts[2].id }),
     ).rejects.toMatchObject({ code: "CONFLICT" });
   });
-  it("runtime settlement storage is read-only, with positive/nonself/group-bound SQL constraints", async () => {
+  it("runtime settlements are append-only, with positive/nonself/group-bound SQL constraints", async () => {
     await checked();
     const id = await payment();
     await expect(
@@ -406,7 +406,7 @@ describe("persisted group balances — real PostgreSQL and authenticated session
         data: {
           id: randomUUID(),
           groupId,
-          fromId: accounts[1].id,
+          fromId: accounts[3].id,
           toId: accounts[0].id,
           createdById: accounts[0].id,
           amount: 1n,

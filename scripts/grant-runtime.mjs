@@ -42,9 +42,9 @@ try {
     "SELECT to_regclass('public.settlements') present",
   );
   if (settlements.rows[0].present) {
-    await client.query(`GRANT SELECT ON TABLE settlements TO ${role}`);
+    await client.query(`GRANT SELECT,INSERT ON TABLE settlements TO ${role}`);
     await client.query(
-      `REVOKE INSERT,UPDATE,DELETE,TRUNCATE ON TABLE settlements FROM ${role}`,
+      `REVOKE UPDATE,DELETE,TRUNCATE ON TABLE settlements FROM ${role}`,
     );
   }
   console.log(

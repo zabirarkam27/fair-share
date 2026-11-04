@@ -5,6 +5,7 @@ import { formatPoisha } from "@/features/expenses/money";
 import { balances } from "./server";
 import { BalanceInvariantError } from "./engine";
 import type { BalanceDetail } from "./service";
+import { paymentMethods } from "@/features/settlements/schema";
 
 function signed(value: string) {
   return (BigInt(value) > 0n ? "+" : "") + formatPoisha(value);
@@ -257,7 +258,7 @@ function GroupPanel({ data }: { data: BalanceDetail }) {
                 {s.fromName} → {s.toName} · {formatPoisha(s.amountPoisha)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {s.createdAt.slice(0, 10)} · {s.method.toLowerCase()}
+                {s.createdAt.slice(0, 10)} · {paymentMethods[s.method]}
               </p>
               <ul className="mt-2 space-y-1">
                 {s.contributions.map((c) => (

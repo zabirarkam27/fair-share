@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # FairShare project rules
 
-The latest user approved Phase 4 only: pure group balance calculation from persisted expenses/splits and recorded settlements, consistent authorized reads, current-user totals and detailed breakdown with exact zero-sum verification. Positive means owed money; negative means owes. Introduce only the settlement storage/read support required for persisted calculation; no public recording workflow, reversals or settlement suggestions yet. Correctly flag the unit/arithmetic conflicts in supplied scenarios rather than corrupt the accounting rules. Replace the interim removal guard with full-ledger zero-balance validation while retaining inactive-member delta protection. Stop after checks/report and wait for explicit approval of later work.
+The latest user approved Phase 5 only: settlement suggestions and recording using the existing balance engine. Suggestions never affect balances. Implement deterministic greedy matching, and bounded exact optimization for small groups where practical, with truthful threshold/complexity labels. Record only active same-group debtor-to-creditor payments within both outstanding balances, using session-derived involved-party/admin authorization, a group lock, transaction, scoped idempotency key and immutable audit. bKash/Cash/Bank labels. Keep reversal workflows out of scope. Work on the original branch, test critical behavior before committing, then report and wait for explicit approval. Do not push unverified Phase 5 work.
 
 ## Approval workflow
 

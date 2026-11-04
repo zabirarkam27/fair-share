@@ -9,6 +9,7 @@ import { GroupControls } from "@/features/groups/group-controls";
 import { expenses } from "@/features/expenses/server";
 import { ExpensePanel } from "@/features/expenses/expense-panel";
 import { GroupBalances } from "@/features/balances/balance-panel";
+import { SettlementSection } from "@/features/settlements/settlement-section";
 export default async function GroupPage({
   params,
   searchParams,
@@ -50,6 +51,7 @@ export default async function GroupPage({
       </p>
       <GroupControls group={group} />
       <GroupBalances groupId={groupId} />
+      <SettlementSection groupId={groupId} />
       <ExpensePanel group={group} items={expensePage.items} />
       <nav
         aria-label="Expense pages"
