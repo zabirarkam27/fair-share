@@ -464,17 +464,23 @@ describe("settlement suggestions and recording — real sessions and PostgreSQL"
   });
   it("HTTP suggestions render without recording a settlement or disclosing the group to outsiders", async () => {
     await debt();
-    const response = await fetch(base + `/dashboard/groups/${groupId}`, {
-      headers: { Cookie: accounts[0].cookie },
-    });
+    const response = await fetch(
+      base + `/dashboard/groups/${groupId}/settlements`,
+      {
+        headers: { Cookie: accounts[0].cookie },
+      },
+    );
     expect(response.status).toBe(200);
     const html = await response.text();
     expect(html).toContain("Payment suggestions");
     expect(html).toContain("Record a payment");
     expect(await prisma.settlement.count({ where: { groupId } })).toBe(0);
-    const outsider = await fetch(base + `/dashboard/groups/${groupId}`, {
-      headers: { Cookie: accounts[3].cookie },
-    });
+    const outsider = await fetch(
+      base + `/dashboard/groups/${groupId}/settlements`,
+      {
+        headers: { Cookie: accounts[3].cookie },
+      },
+    );
     expect(await outsider.text()).not.toContain(`Settlement expense ${run}`);
     await checked();
   });

@@ -1,77 +1,84 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { requireSession } from "@/lib/auth/session";
-import { groups } from "@/features/groups/server";
-import { GroupError, type GroupDetail } from "@/features/groups/service";
-import { groupIdSchema } from "@/features/groups/schema";
-import { GroupControls } from "@/features/groups/group-controls";
+import { ArrowUpRight, ReceiptText, Wallet, Users, Clock3 } from "lucide-react";
+import { groupPage } from "@/features/groups/group-page";
 import { expenses } from "@/features/expenses/server";
 import { ExpensePanel } from "@/features/expenses/expense-panel";
 import { GroupBalances } from "@/features/balances/balance-panel";
-import { SettlementSection } from "@/features/settlements/settlement-section";
+import { PageHeading } from "@/components/shared/page-heading";
+import { Button } from "@/components/ui/button";
 export default async function GroupPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ groupId: string }>;
-  searchParams: Promise<{ page?: string }>;
 }) {
-  await requireSession();
-  const { groupId } = await params;
-  if (!groupIdSchema.safeParse(groupId).success) notFound();
-  let group: GroupDetail;
-  try {
-    group = await groups.detail({ groupId });
-  } catch (error) {
-    if (error instanceof GroupError && error.code === "NOT_FOUND") notFound();
-    throw error;
-  }
-  const query = await searchParams;
-  const page =
-    query.page && /^[1-9]\d{0,4}$/.test(query.page) ? Number(query.page) : 1;
-  const expensePage = await expenses.list({ groupId, page });
+  const group = await groupPage(params),
+    base = `/dashboard/groups/${group.id}`;
+  const expensePage = await expenses.list({ groupId: group.id, page: 1 });
   return (
     <>
-      <Link
-        href="/dashboard/groups"
-        className="mb-7 inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary"
-      >
-        <ArrowLeft className="size-3.5" />
-        Your groups
-      </Link>
-      <p className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-muted-foreground">
-        A SHARED CHAPTER
-      </p>
-      <h1 className="break-words text-3xl font-medium tracking-tight sm:text-4xl">
-        {group.name}
-      </h1>
-      <p className="mt-3 mb-9 max-w-xl break-words text-sm leading-7 text-muted-foreground">
-        {group.description || "Good company. A fresh chapter."}
-      </p>
-      <GroupControls group={group} />
-      <Link
-        href={`/dashboard/groups/${groupId}/activity`}
-        className="mt-6 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
-      >
-        View activity history →
-      </Link>
-      <GroupBalances groupId={groupId} />
-      <SettlementSection groupId={groupId} />
-      <ExpensePanel group={group} items={expensePage.items} />
-      <nav
-        aria-label="Expense pages"
-        className="mt-6 flex justify-between text-sm"
-      >
-        {page > 1 ? (
-          <Link href={`?page=${page - 1}`}>← Previous</Link>
-        ) : (
-          <span />
-        )}
-        {expensePage.hasNext ? (
-          <Link href={`?page=${page + 1}`}>Next →</Link>
-        ) : null}
-      </nav>
+      <PageHeading
+        title="Group overview"
+        description={
+          group.description ||
+          "Every shared moment, every poisha accounted for."
+        }
+        action={
+          <Button asChild>
+            <Link href={`${base}/expenses/new`}>Add expense</Link>
+          </Button>
+        }
+      />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          {
+            path: "/expenses",
+            label: "All expenses",
+            detail: "Browse shared costs",
+            icon: ReceiptText,
+          },
+          {
+            path: "/settlements",
+            label: "Settle up",
+            detail: "View payment suggestions",
+            icon: Wallet,
+          },
+          {
+            path: "/settings",
+            label: "Members & settings",
+            detail: `${group.members.filter((m) => m.status === "ACTIVE").length} active members`,
+            icon: Users,
+          },
+          {
+            path: "/activity",
+            label: "Activity history",
+            detail: "Who changed what",
+            icon: Clock3,
+          },
+        ].map(({ path, label, detail, icon: Icon }) => (
+          <Link
+            key={path}
+            href={base + path}
+            className="rounded-xl border bg-card p-5 hover:border-primary/40 focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <div className="mb-4 flex justify-between text-primary">
+              <Icon className="size-5" />
+              <ArrowUpRight className="size-4" />
+            </div>
+            <h2 className="text-sm font-semibold">{label}</h2>
+            <p className="mt-2 text-xs text-muted-foreground">{detail}</p>
+          </Link>
+        ))}
+      </div>
+      <GroupBalances groupId={group.id} />
+      <ExpensePanel group={group} items={expensePage.items.slice(0, 5)} />
+      {expensePage.items.length ? (
+        <Link
+          href={`${base}/expenses`}
+          className="mt-5 inline-flex text-sm font-medium text-primary hover:underline"
+        >
+          View all expenses →
+        </Link>
+      ) : null}
     </>
   );
 }

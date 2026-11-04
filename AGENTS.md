@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # FairShare project rules
 
-The latest user approved Phase 6 only: Activity History and Audit Logging for group creation, joining/removal, expense creation/edit/deletion and settlement recording. Preserve immutable old/new snapshots across multiple expense edits and deletion. Every read must authorize current group membership. Sanitize metadata through explicit allowlists; do not expose credentials, tokens, emails or request fingerprints. Related domain/audit records commit atomically. Retain existing audit rows and support legacy metadata safely. Use the existing branch, run checks before meaningful local commits, report actual results and wait for explicit approval. Keep reversal/new-phase workflows and publication out of this implementation scope.
+The latest user approved Phase 7 only: Dashboard and User Interface. Build responsive accessible connected screens using existing authorized services. Display server-calculated allocations, balances and payment plans; no frontend split/accounting engines. Keep destructive confirmations, loading/error/success/empty states, currency formatting and permission boundaries. Work on the existing branch, test critical behavior before meaningful local commits, report actual results and wait for explicit approval. Publication and later workflows remain outside this phase.
 
 ## Approval workflow
 

@@ -60,12 +60,12 @@
   --accent: #e5eedc;
   --accent-foreground: #285437;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
+  --border: #dde5df;
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: #285f48;
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: #f5f7f5;
+  --foreground: #1c352b;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -140,4 +140,9 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  a:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; border-radius: 4px; }
+  input[type="date"], select { min-width: 0; }
 }

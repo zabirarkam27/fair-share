@@ -14,6 +14,38 @@ export function createActivityService(
   resolveSession: () => Promise<{ user: { id: string } } | null>,
 ) {
   return {
+    async recent() {
+      const session = await resolveSession();
+      if (!session)
+        throw new GroupError("UNAUTHENTICATED", "Please sign in to continue.");
+      // Authorization is part of this query, never a client-supplied group list.
+      const rows = await db.activity.findMany({
+        where: {
+          group: {
+            deletedAt: null,
+            members: { some: { userId: session.user.id, status: "ACTIVE" } },
+          },
+        },
+        select: {
+          id: true,
+          groupId: true,
+          actorName: true,
+          type: true,
+          createdAt: true,
+          group: { select: { name: true } },
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 8,
+      });
+      return rows.map((row) => ({
+        id: row.id,
+        groupId: row.groupId,
+        groupName: row.group.name,
+        actorName: row.actorName,
+        action: row.type,
+        createdAt: row.createdAt.toISOString(),
+      }));
+    },
     async list(input: unknown) {
       const session = await resolveSession();
       if (!session)

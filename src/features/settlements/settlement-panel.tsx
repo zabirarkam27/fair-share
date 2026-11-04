@@ -1,6 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  formatPoisha,
-  parsePoisha,
-  poishaToDecimal,
-} from "@/features/expenses/money";
+import { formatPoisha, poishaToDecimal } from "@/features/expenses/money";
 import {
   paymentMethods,
   recordSettlementSchema,
@@ -41,26 +37,9 @@ function RecordForm({
   const router = useRouter(),
     [error, setError] = useState(""),
     [pending, startTransition] = useTransition();
-  const debtors = data.members.filter(
-    (m) =>
-      BigInt(m.netPoisha) < 0n &&
-      (data.isAdmin ||
-        m.memberId === data.currentUserId ||
-        data.members.some(
-          (x) => x.memberId === data.currentUserId && BigInt(x.netPoisha) > 0n,
-        )),
-  );
-  const creditors = data.members.filter(
-    (m) =>
-      BigInt(m.netPoisha) > 0n &&
-      (data.isAdmin ||
-        m.memberId === data.currentUserId ||
-        data.members.some(
-          (x) => x.memberId === data.currentUserId && BigInt(x.netPoisha) < 0n,
-        )),
-  );
+  const { debtors, creditors } = data.recordOptions;
   const [requestKey] = useState(() => crypto.randomUUID());
-  const { register, control, handleSubmit } = useForm<RecordSettlementInput>({
+  const { register, handleSubmit } = useForm<RecordSettlementInput>({
     resolver: zodResolver(recordSettlementSchema),
     defaultValues: {
       groupId: data.groupId,
@@ -71,23 +50,6 @@ function RecordForm({
       requestKey,
     },
   });
-  const values = useWatch({ control });
-  let invalid = "";
-  try {
-    const amount = parsePoisha(values.amount ?? "");
-    const debtor = debtors.find((m) => m.memberId === values.fromId),
-      creditor = creditors.find((m) => m.memberId === values.toId);
-    if (
-      !debtor ||
-      !creditor ||
-      amount <= 0n ||
-      amount > -BigInt(debtor.netPoisha) ||
-      amount > BigInt(creditor.netPoisha)
-    )
-      invalid = "Use a positive amount within both outstanding balances.";
-  } catch (e) {
-    invalid = e instanceof Error ? e.message : "Check the amount.";
-  }
   const submit = handleSubmit(
     (input) => {
       setError("");
@@ -170,21 +132,12 @@ function RecordForm({
           Record only a payment that has already happened. You can enter a
           partial payment; the remaining balance will be recalculated.
         </p>
-        {invalid ? (
-          <p className="text-xs text-muted-foreground" aria-live="polite">
-            {invalid}
-          </p>
-        ) : null}
         {error ? (
           <p className="text-sm text-destructive" role="alert">
             {error}
           </p>
         ) : null}
-        <Button
-          className="w-full"
-          disabled={pending || !!invalid}
-          type="submit"
-        >
+        <Button className="w-full" disabled={pending} type="submit">
           {pending ? "Recording…" : "Record completed payment"}
         </Button>
       </fieldset>
@@ -194,9 +147,11 @@ function RecordForm({
 function RecordDialog({
   data,
   proposal,
+  onRecorded,
 }: {
   data: SettlementSuggestions;
   proposal?: Proposal;
+  onRecorded: () => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -220,7 +175,10 @@ function RecordDialog({
           <RecordForm
             data={data}
             proposal={proposal}
-            onSaved={() => setOpen(false)}
+            onSaved={() => {
+              setOpen(false);
+              onRecorded();
+            }}
           />
         ) : null}
       </DialogContent>
@@ -228,10 +186,10 @@ function RecordDialog({
   );
 }
 export function SettlementPanel({ data }: { data: SettlementSuggestions }) {
-  const canRecord =
-    data.isAdmin ||
-    data.members.some(
-      (m) => m.memberId === data.currentUserId && BigInt(m.netPoisha) !== 0n,
+  const [notice, setNotice] = useState("");
+  const recorded = () =>
+    setNotice(
+      "Payment recorded. Balances and suggestions have been recalculated.",
     );
   return (
     <section
@@ -248,10 +206,18 @@ export function SettlementPanel({ data }: { data: SettlementSuggestions }) {
             is recorded.
           </p>
         </div>
-        {canRecord && data.payments.length ? (
-          <RecordDialog data={data} />
+        {data.canRecord && data.payments.length ? (
+          <RecordDialog data={data} onRecorded={recorded} />
         ) : null}
       </div>
+      {notice ? (
+        <p
+          role="status"
+          className="mb-5 rounded-lg bg-secondary p-4 text-sm text-primary"
+        >
+          {notice}
+        </p>
+      ) : null}
       {data.payments.length ? (
         <>
           <p className="mb-4 text-xs text-muted-foreground">
@@ -274,7 +240,11 @@ export function SettlementPanel({ data }: { data: SettlementSuggestions }) {
                   </p>
                 </div>
                 {p.canRecord ? (
-                  <RecordDialog data={data} proposal={p} />
+                  <RecordDialog
+                    data={data}
+                    proposal={p}
+                    onRecorded={recorded}
+                  />
                 ) : (
                   <span className="text-xs text-muted-foreground">
                     Sender, receiver or admin can record

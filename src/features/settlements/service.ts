@@ -58,8 +58,31 @@ export function createSettlementService(
               "An inactive member has an unresolved balance. Review group history first.",
             );
           const plan = suggestPayments(ledger.calculated.members);
+          const currentNet = ledger.calculated.members.find(
+            (m) => m.memberId === user.id,
+          )!.netPoisha;
+          const canRecord = actorMember.role === "ADMIN" || currentNet !== 0n;
+          const recordOptions = (debtor: boolean) =>
+            ledger.calculated.members
+              .filter(
+                (m) =>
+                  roster.get(m.memberId)!.status === "ACTIVE" &&
+                  (debtor ? m.netPoisha < 0n : m.netPoisha > 0n) &&
+                  (actorMember.role === "ADMIN" ||
+                    m.memberId === user.id ||
+                    (debtor ? currentNet > 0n : currentNet < 0n)),
+              )
+              .map((m) => ({
+                memberId: m.memberId,
+                name: roster.get(m.memberId)!.user.name,
+              }));
           return {
             groupId,
+            canRecord,
+            recordOptions: {
+              debtors: recordOptions(true),
+              creditors: recordOptions(false),
+            },
             algorithm: plan.algorithm,
             minimumGuaranteed: plan.minimumGuaranteed,
             clearsBalances: plan.clearsBalances,

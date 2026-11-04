@@ -8,6 +8,7 @@ import {
   deleteExpenseSchema,
   expenseKeySchema,
   listExpenseSchema,
+  previewExpenseSchema,
   type ExpenseData,
 } from "./schema";
 import { calculateExpense } from "./calculate";
@@ -176,6 +177,37 @@ export function createExpenseService(
     });
   }
   return {
+    async preview(input: unknown) {
+      const user = await actor();
+      const { seed, expenseId, version, ...data } =
+        previewExpenseSchema.parse(input);
+      return db.$transaction(
+        async (tx) => {
+          const member = await access(tx, data.groupId, user.id);
+          const previous = expenseId
+            ? await find(tx, data.groupId, expenseId)
+            : undefined;
+          if (previous) manage(previous, user.id, member.role, version!);
+          const result = await validate(
+            tx,
+            data,
+            previous?.id ?? seed,
+            previous,
+          );
+          return {
+            totalPoisha: result.total.toString(),
+            splits: result.splits.map((s) => ({
+              userId: s.userId,
+              amountPoisha: s.amount.toString(),
+            })),
+          };
+        },
+        {
+          ...options,
+          isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+        },
+      );
+    },
     async create(input: unknown) {
       const user = await actor();
       const data = createExpenseSchema.parse(input);

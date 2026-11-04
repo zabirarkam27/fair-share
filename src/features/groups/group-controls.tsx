@@ -102,7 +102,9 @@ export function GroupControls({ group }: { group: GroupDetail }) {
                   ? member.role === "ADMIN"
                     ? "Group admin"
                     : "Member"
-                  : "Former member · removed"}
+                  : member.status === "LEFT"
+                    ? "Former member · left"
+                    : "Former member · removed"}
               </p>
             </div>
             {isAdmin &&

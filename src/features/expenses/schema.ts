@@ -20,6 +20,16 @@ export const createExpenseSchema = expenseDataSchema
 export const editExpenseSchema = expenseDataSchema
   .extend({ expenseId: z.uuid(), version: z.number().int().positive() })
   .strict();
+export const previewExpenseSchema = expenseDataSchema
+  .extend({
+    seed: z.uuid(),
+    expenseId: z.uuid().optional(),
+    version: z.number().int().positive().optional(),
+  })
+  .strict()
+  .refine((data) => !!data.expenseId === (data.version !== undefined), {
+    message: "Editing a preview requires an expense and its version.",
+  });
 export const expenseKeySchema = z
   .object({ groupId: z.uuid(), expenseId: z.uuid() })
   .strict();

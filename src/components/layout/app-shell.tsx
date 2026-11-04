@@ -11,6 +11,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
+import { WorkspaceLocation } from "./workspace-location";
 import { WorkspaceNav } from "./workspace-nav";
 type Identity = { name: string; email: string };
 function Navigation({
@@ -21,7 +22,7 @@ function Navigation({
   mobile?: boolean;
 }) {
   return (
-    <div className="flex h-full flex-col bg-[#193e30] px-6 py-9 text-[#c8d6c4]">
+    <div className="flex h-full flex-col overflow-y-auto bg-[#193e30] px-6 py-9 text-[#c8d6c4]">
       <Brand inverted />
       <p className="mt-12 mb-4 px-3 text-[9px] font-semibold tracking-[0.2em] text-[#8eac93]">
         YOUR SHARED WORLD
@@ -112,7 +113,7 @@ export function AppShell({
                 Your workspace
               </span>
               <ChevronRight className="hidden size-3 text-muted-foreground sm:block" />
-              <span>Overview</span>
+              <WorkspaceLocation />
             </div>
           </div>
           <span className="flex items-center gap-2 rounded-full border px-3 py-2 text-[10px] text-muted-foreground">
@@ -122,7 +123,7 @@ export function AppShell({
         </header>
         <main
           id="main-content"
-          className="mx-auto max-w-[1400px] px-5 py-8 sm:px-9 sm:py-11"
+          className="mx-auto min-w-0 max-w-[1400px] px-5 py-8 sm:px-9 sm:py-11"
         >
           {children}
           <footer className="mt-12 flex items-center justify-between border-t pt-6 text-[10px] text-muted-foreground">

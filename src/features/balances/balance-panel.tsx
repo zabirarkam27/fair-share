@@ -35,7 +35,7 @@ function Summary({ owedBy, owedTo }: { owedBy: string; owedTo: string }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Card className="shadow-none">
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             You owe
           </CardTitle>
@@ -48,7 +48,7 @@ function Summary({ owedBy, owedTo }: { owedBy: string; owedTo: string }) {
         </CardContent>
       </Card>
       <Card className="border-primary/20 bg-primary/5 shadow-none">
-        <CardHeader className="flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium text-primary">
             You’re owed
           </CardTitle>
@@ -79,10 +79,8 @@ export async function DashboardBalances() {
         separate.
       </p>
       {data.groups.length ? (
-        <details className="mt-3 text-sm">
-          <summary className="cursor-pointer text-muted-foreground">
-            View balances by group
-          </summary>
+        <div className="mt-6 text-sm">
+          <h2 className="mb-3 text-lg font-semibold">Your group balances</h2>
           <ul className="mt-3 divide-y rounded-xl border px-4">
             {data.groups.map((g) => (
               <li
@@ -106,7 +104,7 @@ export async function DashboardBalances() {
               </li>
             ))}
           </ul>
-        </details>
+        </div>
       ) : null}
     </section>
   );

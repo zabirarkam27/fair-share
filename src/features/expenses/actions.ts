@@ -30,3 +30,14 @@ export async function editExpense(input: unknown) {
 export async function deleteExpense(input: unknown) {
   return run(() => expenses.delete(input));
 }
+export async function previewExpense(input: unknown) {
+  try {
+    return { data: await expenses.preview(input) };
+  } catch (error) {
+    if (error instanceof GroupError || error instanceof MoneyError)
+      return { error: error.message };
+    if (error instanceof ZodError)
+      return { error: "Check all expense fields and try again." };
+    return { error: "We could not calculate the split. Please try again." };
+  }
+}
