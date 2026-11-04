@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # FairShare project rules
 
-The user-authored master development instructions received on 4 November 2026 govern this repository. Phase 1 only was explicitly approved and is implemented: auth, Prisma/PostgreSQL foundation, Tailwind/shadcn, protected routing and responsive layout. Results are in docs/PHASE_1_REPORT.md. Wait for explicit further approval; do not start group management or Phase 2. See ARCHITECTURE.md, DECISIONS.md and plan.md.
+The user-authored master development instructions received on 4 November 2026 govern this repository. The latest user approved Phase 2 as Group Management and Authorization (overriding the earlier phase numbering). This scope is implemented and verified in docs/PHASE_2_REPORT.md. Stop and await explicit approval before further work. No expenses, financial engine or settlements are approved. Before any future financial writer is enabled, add the mandatory zero-net-balance removal guard.
 
 ## Approval workflow
 

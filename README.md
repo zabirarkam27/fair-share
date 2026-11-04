@@ -1,6 +1,6 @@
-# FairShare — Phase 1
+# FairShare — Phase 2
 
-Authentication and the initial responsive application shell. This phase contains signup, signin, signout, database-backed sessions and protected routing. Group/expense/payment features are **not active**. The earlier implementation is preserved at `reference/pre-phase1/` and Git checkpoint `519735d`; its database was not reset or migrated.
+Authentication, responsive application shell, and group management/authorization. Create/list/view groups, invite members with hashed expiring links, and use admin-only removal/deletion. Expense/payment features are **not active**. The earlier implementation is preserved at `reference/pre-phase1/` and Git checkpoint `519735d`; its database was not reset or imported.
 
 ## Stack
 
@@ -41,7 +41,7 @@ Copy `.env.example` to `.env.local` and supply real, separately provisioned URLs
 | BETTER_AUTH_SECRET | Cryptographically random secret, at least 32 characters |
 | BETTER_AUTH_URL | Exact trusted origin; local http://127.0.0.1:3000 |
 
-Migration commands use Prisma `migrate deploy`; they do not reset a database. The initial migration creates only User/Session/Account/Verification and indexes/foreign keys. The full domain design remains an inactive proposal in `prisma/schema.proposal.prisma`.
+Migration commands use Prisma `migrate deploy`; they do not reset a database. The initial migration creates User/Session/Account/Verification; the additive Phase 2 migration adds Group/GroupMember/Activity with scoped runtime grants and indexes. Financial entities remain an inactive proposal in `prisma/schema.proposal.prisma`.
 
 ## Authentication and routes
 
@@ -55,9 +55,17 @@ Passwords are hashed/verified by Better Auth. No custom password algorithm, sess
 
 **UTC adapter requirement:** Prisma pg 7.10.1 can mis-handle timestamptz with a non-UTC connection timezone. The client explicitly sets `options: '-c timezone=UTC'`; keep it. The expired-session integration regression reproduced the failure on the local Dhaka-configured PostgreSQL server and passes with this setting. See [the upstream report](https://github.com/prisma/orm/issues/28629). Confirm your connection provider preserves this startup option before deployment.
 
-## Demo account
+## Groups and invitations
 
-The browser smoke check registered `rafi.phase1@example.test` with password `FairSharePhase1!2026` in this local development database only. This is a public demonstration credential, not an application secret. It is not automatically seeded on a fresh install; use `/signup` to create a new account. The old rafi@fairshare.demo account belongs to the archived reference database.
+`/dashboard` and `/dashboard/groups` list only your own live groups. `/dashboard/groups/[groupId]` independently checks current membership before reading details or members. An admin can issue/replace/revoke an invitation, remove a member, or delete the group with exact-name confirmation. Deletion hides the group and revokes its link while retaining history.
+
+Invites expire in seven days, contain 32 random bytes and are stored only as SHA-256 hashes. Copy the raw link when generated; it cannot be retrieved later. `/join/[token]` provides no private group preview and never joins on GET. Signin/signup returns to the invitation, then acceptance checks it again under a group-row lock. Duplicate joins are idempotent. Removed members cannot return through a generic invitation. No client actor ID or role is trusted.
+
+There is no expense ledger yet. Removal must receive a zero-balance guard before future financial writes are enabled. Leave/reactivation/role-transfer UI and shared invitation throttling are not included in this phase. See the Phase 2 report for security tests and deployment limits.
+
+## Demo accounts
+
+Local browser demonstrations use `rafi.phase1@example.test` / `FairSharePhase1!2026` (admin of The Dhanmondi flat) and `nusrat.phase2@example.test` / `FairSharePhase2!2026` (member). These are public local demonstration credentials, not production secrets. They are not seeded on a fresh install; use `/signup` to create an account and a group. The old rafi@fairshare.demo account belongs to the archived reference database.
 
 ## Checks
 
@@ -85,8 +93,8 @@ Webpack is explicitly selected because this sandbox blocked Turbopack junction c
 
 ## Phase boundary and known limits
 
-No group management, domain migrations, balances, expense splitting or settlement flows have been implemented in this phase. No deployment, GitHub publication or assessment submission has been performed. Email verification, password recovery and distributed abuse protection are not configured; do not call this production-ready. Better Auth's in-memory HTTP rate limits are not a shared limiter and are not claimed to cover direct Server Action calls.
+Groups and authorization are implemented; balances, expense splitting and settlement flows are not. No deployment, GitHub publication or assessment submission has been performed. Email verification, password recovery and distributed abuse protection are not configured; do not call this production-ready. Better Auth's in-memory HTTP rate limits are not a shared limiter and are not claimed to cover direct Server Action calls.
 
 ESLint 9.39.5 is retained for the declared peer ranges of Next 16.4.5's lint plugins; npm marks that ESLint line unsupported. ESLint 10 executed locally but produced transitive peer conflicts, so it was not left as an unsupported combination. Revisit the lint toolchain together when Next's plugins support it. shadcn is development tooling, not a runtime dependency; its transitive audit advisories are reported in the phase report. Do not apply npm's suggested major downgrade blindly.
 
-See [Phase 1 results](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.
+See [Phase 2 results](docs/PHASE_2_REPORT.md), [Phase 1 history](docs/PHASE_1_REPORT.md), [architecture](ARCHITECTURE.md), [decisions](DECISIONS.md), [AI usage](AI_LOG.md) and [plan](plan.md). Further phases require explicit approval.

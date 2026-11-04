@@ -1,6 +1,6 @@
 # FairShare — critically reviewed architecture
 
-**Reviewed design; Phase 1 only approved and implemented.** Reviewed 4 November 2026 (Asia/Dhaka). Initial draft is preserved at docs/architecture-initial.md. See docs/PHASE_1_REPORT.md for implemented auth/foundation scope; the domain design below remains an inactive proposal. Further implementation requires explicit approval.
+**Reviewed design; Phase 1 and Phase 2 (groups/authorization) implemented.** Reviewed 4 November 2026 (Asia/Dhaka). Initial draft is preserved at docs/architecture-initial.md. See docs/PHASE_1_REPORT.md and docs/PHASE_2_REPORT.md for actual scope/evidence. Financial entities/workflows below remain proposals. The latest user defined Phase 2 as groups, superseding the older numbering. Further implementation requires explicit approval.
 
 ## 1. Compatibility: supported, not yet runtime-proven
 
@@ -13,7 +13,7 @@
 | Prisma CLI / client / adapter-pg | **7.10.1 for all three** | Read-only npm metadata confirms packages exist; CLI Node range ^20.19 / ^22.12 / >=24 |
 | PostgreSQL | 18 | Local installed 18.1; deploy a maintained PostgreSQL 18 patch release |
 
-The selected combination is now installed and runtime-verified for Phase 1 auth: schema validation/client generation, clean database migrations and real Better Auth HTTP/browser checks pass. The active prisma/schema.prisma contains auth models only; the full domain schema.proposal.prisma is still not applied or CLI-validated. Do not extend the auth result into claims about domain models. Versions are pinned; Prisma 8/RC APIs were not adopted.
+The selected combination is installed and runtime-verified for authentication and group authorization. Active prisma/schema.prisma contains auth, Group, GroupMember and Activity models; two migrations applied successfully. Group services and real PostgreSQL permission/race tests pass. The full financial schema.proposal.prisma is still not applied or CLI-validated. Do not extend these results into financial-feature claims. Versions are pinned; Prisma 8/RC APIs were not adopted.
 
 Runtime finding: Prisma pg 7.10.1 requires an explicit UTC connection timezone on this Dhaka-configured PostgreSQL cluster to preserve timestamptz expiry instants. src/lib/db/prisma.ts sets it; the retained expiration regression passes. See [upstream issue](https://github.com/prisma/orm/issues/28629).
 

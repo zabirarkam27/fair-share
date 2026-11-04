@@ -1,60 +1,34 @@
-# FairShare phased plan
+# FairShare approval-gated plan
 
-Current phase: **1 — implemented and verified; awaiting review/approval before any further phase**. See docs/PHASE_1_REPORT.md.
+Current status: **Phase 2 — Group Management and Authorization implemented and verified; awaiting explicit approval before further work.** The user's latest scope supersedes the earlier plan's numbering. No financial implementation is authorized by this completion.
 
-The user explicitly approved Phase 1 only. The pre-existing implementation is preserved under reference/pre-phase1 and checkpoint 519735d. No next-phase approval is implied.
+## Completed foundations
 
-## Phase 0 — audit and architecture
+- Phase 0: repository audit, architecture/security/financial proposals and decisions. Initial build preserved at reference/pre-phase1 and Git checkpoint 519735d.
+- Phase 1: Next.js/TypeScript, Tailwind/shadcn, Prisma/PostgreSQL auth migration, restricted dev/test roles, Better Auth Server Actions/sessions and protected responsive shell. Report: docs/PHASE_1_REPORT.md.
 
-- [x] Inspect current files, dependencies, schema, service and test boundaries.
-- [x] Identify differences from the new stack and workflow.
-- [x] Prepare ARCHITECTURE.md, ER diagram, folder/service boundaries and risk register.
-- [x] Prepare inactive Prisma schema proposal.
-- [x] Write initial DECISIONS.md and project rules.
-- [x] Critically review all nine requested areas; select concrete version target, correct membership/remainder/history assumptions and document runtime-verification limits.
-- [x] Record current verification accurately: TypeScript + 12 tests pass; earlier build + 42 HTTP assertions pass; latest HTTP regressions not run; ESLint missing.
-- [x] User approves architecture and phase 1.
+## Phase 2 — approved group scope
 
-No database schema was changed and no Prisma dependencies were installed in phase 0.
+- [x] Create group + creator ADMIN + audit in one transaction.
+- [x] List only the verified user's active groups.
+- [x] Independently authorize group details and member roster reads.
+- [x] Issue cryptographically random, hashed, seven-day invitations; rotate/revoke.
+- [x] Preserve invitation through signin/signup, then explicitly accept.
+- [x] Prevent duplicate memberships and concurrent duplicate join events.
+- [x] Admin-only removal; retain REMOVED membership and deny link-based rejoin.
+- [x] Admin-only exact-name-confirmed soft deletion + invitation revocation + history.
+- [x] Apply additive migration and scoped grants to dev/test DBs.
+- [x] Verify the eight requested tests plus related lifecycle, rollback, race and auth regressions.
+- [x] TypeScript, zero-warning ESLint, 17 unit tests, 34 PostgreSQL integration tests and production build pass.
+- [x] Browser create/invite/signup-return/join/member-view flow verified.
+- [ ] User reviews Phase 2 report and explicitly authorizes any next scope.
 
-## Phase 1 — foundation and database/auth migration (after approval)
+See docs/PHASE_2_REPORT.md for actual evidence, fixture-rate-limit failures/correction and limits. Group operations are implemented; expense/balance/settlement code is not active. Leave, admin transfer and reactivation UI are not part of the requested features.
 
-**Completed scope:** auth-only Prisma schema/migration, separate PostgreSQL dev/test/shadow databases and roles, Better Auth signup/signin/signout/session handling, protected routing, Tailwind/shadcn/RHF responsive shell, setup documentation and tests. Domain models remain inactive. TypeScript, zero-warning ESLint, 13 unit tests, 14 integration tests, production build and browser smoke pass. UTC adapter/session-expiry regression was fixed and retained. See the report for limits and exact evidence. **Stop here until explicit further approval.**
+## Future work — proposals, not authorization
 
-Review/checkpoint the reference baseline. Pin Next.js 16.4.5, Better Auth 1.7.16 and Prisma CLI/client/adapter-pg 7.10.1 after a security advisory check; pin compatible Tailwind/shadcn, RHF, Vitest and ESLint. Validate the proposal with that CLI, generate/compare Better Auth schema and client, and prove registration/sign-in/sign-out/session cookies using nextCookies and Prisma-adapter transactions. Establish a new target dev DB, isolated test DB and distinct migrate-dev shadow DB. Use non-owner runtime grants and separate migrator/test-maintenance roles. Preserve existing local data; do not overlay/reset the reference Drizzle database. Version changes on compatibility/security failure must be documented before proceeding.
+If approved, the next financial scope needs pure BigInt poisha codecs, four exact split methods, persisted allocations, ledger invariants and deterministic settlement suggestions, followed by transactional expense/payment/audit services and their UI. Before permitting any financial writes, integrate zero-net-balance checks into member removal and inactive-member delta guards into historical corrections. Do not leave today's group-only removal assumption in a future ledger-enabled app.
 
-Deliver: Prisma schema/migrations, Better Auth Prisma integration, environment examples, seed data, test/ESLint setup, auth smoke tests, setup README. Gate: typecheck, ESLint, relevant Vitest and auth/database checks; security/diff review; report results and **wait for approval**.
+The full Prisma proposal is an entity design reference, not a file to copy over the applied schema. Retain active table mappings and migration history while adding explicitly approved entities. Shared invitation throttling, log redaction, recovery/verification, retention and operational hardening remain deployment gates.
 
-## Phase 2 — money engine and financial model
-
-Port cases to Vitest. Implement BigInt-only parse/format/DTO codecs, four splits with integer shares, zero-sum ledger, settlement/reversal signs and greedy suggestions. Test values beyond Number.MAX_SAFE_INTEGER, one-poisha cases, generated conservation, aggregate text parsing and greedy non-optimality. Test local SQL constraints and application cross-row sum validation; no claim that a CHECK enforces child totals.
-
-Gate: typecheck, ESLint, pure/domain and PostgreSQL tests; review invariants and overflow/serialization; report results and **wait for approval**.
-
-## Phase 3 — groups and permissions
-
-Implement authorized reads/create, admin/member permissions, ACTIVE/LEFT/REMOVED transitions, hashed seven-day invites, rotation/revocation races, zero-balance departure, explicit admin reactivation and soft deletion. Prove a removed user cannot use a generic link to return. Implement the inactive-member zero-financial-delta guard for future expense/payment corrections. Use Server Actions + feature services with shared group-row lock protocol.
-
-Gate: typecheck, ESLint, relevant tests, permission matrix and diff review; **wait for approval**.
-
-## Phase 4 — expenses, settlements and audit
-
-Implement transactional Expense/ExpenseSplit writes for four split types, creation request-key/fingerprint retries and optimistic edit/delete versions. Add locked/idempotent settlements and one full append-only SettlementReversal per payment with reason/actor. Write versioned before/after audit snapshots with actor-name retention and cursor feed. Test FK isolation, role/ownership failures, stale versions, inactive financial deltas, duplicate/conflicting retries, simultaneous payments/reversals, immutable grants and audit-failure rollbacks using independently committed PostgreSQL fixtures.
-
-Gate: typecheck, ESLint, relevant Vitest/DB tests and service security review; **wait for approval**.
-
-## Phase 5 — feature UI
-
-Refactor the dashboard into feature/layout components using Tailwind/shadcn, Lucide, RHF and Zod. Include all required screens, full-reversal confirmation/reason, removed-member reactivation, raw invite reveal at creation only, accurate full-ledger breakdowns, recent activity and responsive loading/error/empty/success states. Paginate lists independently of full-ledger aggregates. Verify keyboard/mobile use and auth cookie persistence. Do not add charts without a useful question.
-
-Gate: typecheck, ESLint, relevant tests, desktop/mobile keyboard/browser walkthrough and diff review; **wait for approval**.
-
-## Phase 6 — final verification and submission preparation
-
-Run complete checks and production build. Check auth, isolation, roles, four splits, balances, suggestions, settlement persistence, history, validation and lifecycle edge cases end to end. Finish README, .env.example, DECISIONS, actual AI_LOG and ~120-word Part C drafts for candidate review. Prepare a <=5-minute demo recording/script with one strength and one limitation. Review secrets and tracked files; make meaningful commits. Publish a public GitHub repo only under the approved publishing scope and available account access. Optional deployment requires PostgreSQL, secrets, trusted HTTPS origin and production migrations. Submission form/receipt deadline require the actual supplied link/time; do not guess them.
-
-Final gate: report exact evidence, limits and missing deliverables. Do not call the assessment complete until critical checks and required submission deliverables are fulfilled. Follow any required final user approval for publication/submission.
-
-## Time and scope
-
-Target focused effort is 8–12 hours, excluding approval waits. Keep one payer, one currency and greedy suggestions. One narrow full-payment reversal is included because immutable wrong payments otherwise cannot be corrected. Defer dark mode, recurring bills, multi-currency, multiple payers, exact optimization, stored balance cache and custom distributed limiter infrastructure. A shared join throttle remains a public-deployment gate. If time tightens, preserve tested core and report omissions. No phase gate passes without actual evidence; pause after each report for approval.
+Every future phase must end with TypeScript, ESLint, relevant real tests, security/diff review and a concise report, then wait for approval. Final submission work includes complete checks, candidate-reviewed personal answers/AI log, a <=5-minute recording, secret review, meaningful commits and only approved publication/submission. Do not claim the entire assessment complete from an individual phase gate.

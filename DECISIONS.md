@@ -1,6 +1,6 @@
 # FairShare reviewed decisions
 
-Status: proposed target architecture, pending approval under the master instructions. Existing implementation differences are recorded in ARCHITECTURE.md.
+Status: authentication and group management/authorization are implemented under explicit Phase 1/Phase 2 approval. Financial rules below remain the proposed target for a later approved phase. Current group scope/evidence is in docs/PHASE_2_REPORT.md; no active ledger exists, and its mandatory balance-removal guard must be added before financial writes are enabled. Implementation differences are recorded in ARCHITECTURE.md.
 
 ## Technical choices
 

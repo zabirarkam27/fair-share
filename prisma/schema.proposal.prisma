@@ -1,6 +1,9 @@
 // INACTIVE DESIGN PROPOSAL — no database migration has been applied.
 // Reviewed target: Prisma CLI/client/adapter-pg 7.10.1; Better Auth 1.7.16.
 // Static proposal only: CLI validation/generation/runtime tests require approval.
+// Do not replace the active schema wholesale: active auth/group models have
+// mapped table names and applied migrations. Evolve that schema incrementally
+// when future financial scope is explicitly approved.
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
