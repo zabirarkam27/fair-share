@@ -1,5 +1,20 @@
 # FairShare
 
+## Live demo — try it now
+
+**[Open FairShare](https://fair-share-virid.vercel.app)** · [Sign in](https://fair-share-virid.vercel.app/login) · [Create an account](https://fair-share-virid.vercel.app/signup)
+
+| Demo account | Email | Password | Role in the seeded demo groups |
+| --- | --- | --- | --- |
+| Admin | `admin@fairshare.example` | `FairShare@2026` | Group admin |
+| User 1 | `user1@fairshare.example` | `FairShare@2026` | Member |
+| User 2 | `user2@fairshare.example` | `FairShare@2026` | Member |
+| User 3 | `user3@fairshare.example` | `FairShare@2026` | Member |
+
+These are deliberately public demo-only credentials. The `.example` email addresses are fictional login identifiers, not mailboxes. Admin is an admin of the demo groups, not a site-wide administrator. Shared visitors can change demo records; do not enter personal data or reuse this password elsewhere. Payment methods are labels: the app does not transfer real money.
+
+The demo includes two groups, all four split methods, an edited expense with audit history, partial settlements and a fully settled group. Create your own account to try an independent workspace.
+
 Authentication, groups/authorization, four expense split methods, persisted balances, settlement suggestions/recording and protected activity history. Money uses BigInt poisha. Suggestions do not change balances; recorded settlements do. Expense edits/deletion retain immutable old/new snapshots. Phase 7 adds focused, responsive financial screens and a connected dashboard. Reversals remain unimplemented. The reference build remains at `reference/pre-phase1/` and checkpoint `519735d`; its database was not reset or imported.
 
 ## Stack
@@ -52,11 +67,11 @@ npm run db:seed:demo -- --local
 npm run dev
 ```
 
-This creates real Better Auth accounts with generated passwords for four fictional people: Ayesha, Rafi, Nusrat and Hasan. **Actual generated email/password pairs are in ignored `.local/demo-credentials.json`**; open that file locally to sign in at the exact `BETTER_AUTH_URL`. These are working locally provisioned accounts, not invented default credentials. No plaintext password is committed. A fresh clone generates its own credentials; there is no shared public demo login or deployed URL.
+This creates real Better Auth accounts with generated passwords for four fictional people: Ayesha, Rafi, Nusrat and Hasan. **Actual generated local email/password pairs are in ignored `.local/demo-credentials.json`**; open that file locally to sign in at the exact `BETTER_AUTH_URL`. A fresh clone generates its own local credentials. These differ from the explicitly public hosted demo accounts listed at the top of this README. Private local credentials and server secrets are never committed.
 
 The helper seeds two groups, five expenses across all four methods, an edit preserving original values, and four completed payments across bKash/Cash/Bank labels. One group has outstanding balances after partial settlements; the other is fully settled. `.local/demo-verification.json` records actual server-calculated balances and zero sums. Re-run the seed to verify/reuse records; it does not wipe or reset groups, rotate credentials or remove user data. An interrupted provisioning step may leave partial demo data; preserve the manifest and rerun instead of deleting it. Concurrent seed runs are not supported.
 
-Safety guards require explicit `--local`, non-production mode, the documented loopback `fairshare_phase1` database on port 55432 and loopback HTTP origin on port 3000. Test/prod identity matches are rejected. Hosted/public demo provisioning is not authorized by this command. Never commit or publish `.local/`, passwords, cookies or database files. Review local file permissions when sharing a computer.
+Safety guards require explicit `--local`, non-production mode, the documented loopback `fairshare_phase1` database on port 55432 and loopback HTTP origin on port 3000. Test/prod identity matches are rejected. Hosted/public demo provisioning is not authorized by this command. Never commit or publish `.local/`, private passwords, cookies or database files. The public hosted demo credentials above are an intentional exception requested for evaluation. Review local file permissions when sharing a computer.
 
 ## Authentication and routes
 
@@ -163,7 +178,11 @@ npm start
 
 Webpack is explicitly selected because this sandbox blocked Turbopack junction creation. System fonts keep builds independent of external font downloads.
 
-## Deployment procedure (not executed)
+## Deployment and future setup
+
+The app is deployed at **https://fair-share-virid.vercel.app**, backed by a dedicated Neon PostgreSQL database. All five migrations were applied. Vercel is connected to this repository's `codex/phase-1-auth` production branch. Runtime credentials are restricted; migration-owner credentials are not installed in the application environment. Future code pushes trigger Vercel deployment; database migrations still need deliberate execution.
+
+For a new deployment:
 
 1. Provision a supported PostgreSQL database, separate migration owner and restricted application role; require provider-appropriate TLS verification. Keep production credentials separate from local/test URLs and do not use the local seed helper against it.
 2. Configure server-only `DATABASE_URL`, migration-owner `DIRECT_URL`, a new random `BETTER_AUTH_SECRET` and the exact HTTPS `BETTER_AUTH_URL` in the host's secret settings. Supply owner credentials only to the migration task where possible. No `NEXT_PUBLIC_` secret is needed.
@@ -171,7 +190,7 @@ Webpack is explicitly selected because this sandbox blocked Turbopack junction c
 4. Build with `npm run build`, serve with `npm start`, and repeat signin/session/permission/ledger smoke checks against a deployment-specific test account. Configure HTTPS, backups, monitoring, log redaction and shared abuse protection before exposing it publicly.
 5. Keep test and shadow databases isolated. Review migration status, rollback/restore procedures and dependency advisories rather than running reset or automatic major-version audit fixes.
 
-No deployment was performed or verified, and no live URL is claimed. The repository is public, but the latest local commits have not been pushed. A public repository alone does not satisfy a deployed-demo bonus.
+The initial production deployment passed 13 HTTPS smoke checks covering login, incorrect-password rejection, sessions, protected pages, demo financial screens and signout. A subsequent browser check also verified new-user registration. These are deployment checks, separate from the isolated PostgreSQL integration suite.
 
 ## Current quality gate
 
@@ -179,7 +198,7 @@ The full requirement-by-requirement checklist, actual test results, findings and
 
 ## Phase boundary and known limits
 
-Phases through the dashboard and connected interface are implemented. Reversals and further work await approval. All work uses the existing [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth) branch. Phases 1–4 are pushed; Phases 5–7 and the quality-review work remain local, awaiting review before publication. No deployment or assessment submission has occurred. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; all checks pass, and pg 9 requires compatibility review.
+Phases through the dashboard and connected interface are implemented and published on the existing [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth) branch, including the quality-review work. The app is deployed; assessment submission and candidate-only requirements remain outstanding. Reversals and further product work await approval. Email verification, password recovery and distributed abuse protection remain unconfigured; the hosted app is a demo, not a production-readiness claim. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; pg 9 requires compatibility review.
 
 ESLint 9.39.5 is retained for the declared peer ranges of Next 16.4.5's lint plugins; npm marks that ESLint line unsupported. ESLint 10 executed locally but produced transitive peer conflicts, so it was not left as an unsupported combination. Revisit the lint toolchain together when Next's plugins support it. shadcn is development tooling, not a runtime dependency; its transitive audit advisories are reported in the phase report. Do not apply npm's suggested major downgrade blindly.
 
