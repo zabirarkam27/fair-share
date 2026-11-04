@@ -1,6 +1,14 @@
 # FairShare approval-gated plan
 
-Current status: **Phase 7 — Dashboard and User Interface implemented and verified; awaiting explicit approval.** Work remains on `codex/phase-1-auth`; Phases 5–7 are committed locally and not pushed. Reversals and later phases remain unimplemented.
+Current status: **Complete quality review after Phase 7; core automated checks verified, candidate-only submission requirements remain pending.** Work stays on `codex/phase-1-auth`. No product feature, migration, dependency upgrade, deployment, push or submission is authorized by this review. Do not declare the assessment complete. Evidence: docs/QUALITY_REVIEW.md.
+
+## Current Git audit and approval gate
+
+The user subsequently requested a history audit and a stricter commit workflow. GitHub's default/intended main branch is `codex/phase-1-auth`, not local `master`. The pre-amend audit snapshot contains 19 linear commits: 11 published through `8f24e2c`, followed by eight local commits through `86dac2f`. All approved phases and quality work are on the intended branch in dependency order; local `master` remains the preserved `519735d` checkpoint. The user then approved final documentation cleanup and the final commit, applying the latest-only amendment proposal; no other branch/history change is authorized.
+
+Going forward: finish one approved phase, run its required tests, review the diff, present a short Conventional Commit message, wait for explicit approval, create one meaningful commit including relevant docs, and push the verified phase. Obtain approval before the next phase. Avoid empty commits and repeated verification/publication documentation commits. Do not force-push, reset branches, delete commits or rewrite published history. Only the latest unpushed commit may be amended when appropriate, after approval of the concrete proposal; older commits remain unchanged unless explicitly authorized.
+
+The audit found no duplicate patch IDs or empty reachable commits. Several documentation titles are repetitive/long, and the published consolidation-note commit describes an earlier branch operation rather than performing one. Preserve these published commits. The approved final documentation amendment uses `docs: update project documentation`, incorporates these workflow updates, confirms the five required files and replaces misleading legacy demo-login guidance with the verified seed accounts. The amended tip's hash is reported by Git after commit; the audit artifact remains a historical pre-amend snapshot. No push is included. Detailed per-commit findings are saved locally in ignored `artifacts/GIT_AUDIT.md`; they do not require another standalone documentation commit.
 
 ## Completed foundations
 
@@ -91,7 +99,24 @@ See docs/PHASE_2_REPORT.md for historical evidence. Leave, admin transfer and re
 - [x] 110 unit tests, 137 PostgreSQL integration tests (14 new interface cases), TypeScript, zero-warning ESLint, production build and five clean-schema migrations pass.
 - [x] Browser all-method previews, percentage error, weighted save/exact edit, partial payment/history, invitation entry and mobile containment verified.
 - [x] Two disposable browser accounts/group and temporary server cleaned up; normal local app restored.
-- [ ] User reviews docs/PHASE_7_REPORT.md and explicitly approves further work/publication.
+- [x] User authorized a complete quality review, documentation and local demo seed only; publication remains separate.
+
+## Quality review — current gate
+
+- [x] Re-read the original assessment and master instructions; separate implemented requirements from proposals and candidate-only deliverables.
+- [x] TypeScript, zero-warning ESLint, 110 unit tests, 138 integration tests, production build and Prisma validation pass.
+- [x] Five migrations pass from an empty isolated test schema; read-only Prisma schema diff reports no difference.
+- [x] Financial/property, authorization, isolation, transaction, audit, invite, retry and inactive-history checks reviewed.
+- [x] Query-budget regression: expense list 8 SELECTs for 1/25 expenses; overview 7 SELECTs for 1/8 groups, excluding the separate auth client.
+- [x] Current secret values absent from 56 browser-build files and 187 tracked files at scan time; no NEXT_PUBLIC_ environment settings.
+- [x] npm production audit 0 advisories; full tooling audit retains 19 moderate/2 low package entries, no high/critical.
+- [x] Guarded local demo seed creates/verifies four Better Auth users, two groups, five expenses, four settlements, retained edit history and exact zero sums. Second run reuses records.
+- [x] README, environment example, six A4 decisions, AI evidence, Part C drafts and requirement-by-requirement checklist updated.
+- [ ] Candidate reviews/rewrites Part C in their own words and confirms a specific independently written contribution/reason. Current claim of writing most of the project is a self-report, not file-level verification.
+- [ ] Candidate records the required <=5-minute walkthrough and confirms receipt/submission deadline.
+- [ ] Explicit approval for publishing current local commits and/or deployment/submission; no live URL is claimed.
+
+The first integration attempt in this review had a Windows worker crash (108 tests passed; remaining settlement cases incomplete). A full retry passed 137, and the expanded suite passed 138. The crash was not suppressed or represented as a pass; its root cause remains unverified. The 40-member/5,000-expense latency scenario and hosted HTTPS/backup/restore operation have not been benchmarked or verified.
 
 ## Future work — proposals, not authorization
 

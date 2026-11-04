@@ -1,6 +1,6 @@
 # FairShare reviewed decisions
 
-Status: authentication, groups, expenses, balances, settlements, protected activity history/audit logging and the connected dashboard/interface are implemented through approved Phase 7. Reversal/dispute workflows remain proposed. Evidence: docs/PHASE_7_REPORT.md. Implementation differences: ARCHITECTURE.md.
+Status: authentication, groups, expenses, balances, settlements, protected activity history/audit logging and the connected dashboard/interface are implemented through approved Phase 7. Reversal/dispute workflows remain proposed. Current quality evidence: docs/QUALITY_REVIEW.md; prior UI evidence: docs/PHASE_7_REPORT.md. Implementation differences: ARCHITECTURE.md.
 
 ## Technical choices
 
@@ -30,7 +30,7 @@ Reject leaving/removal while the member has a nonzero balance, whether they owe 
 
 ## A4.3 Editing an old expense after settlement
 
-Allow an active author/admin to edit with an expected version. Explain that the change affects today's balances even after previous settlement. Preserve existing payment records and write before/after values, original inputs, exact allocations, actor ID/name and timestamp atomically. Historical inactive references may be retained, but no new inactive references introduced; every inactive member's proposed financial delta must be zero. This permits description/date corrections without forcing rejoin. Recorded payment mistakes are corrected with a full append-only SettlementReversal, followed by a correct new payment if needed. Closed periods remain deferred.
+Allow an active author/admin to edit with an expected version. Explain that the change affects today's balances even after previous settlement. Preserve existing payment records and write before/after values, original inputs, exact allocations, actor ID/name and timestamp atomically. Historical inactive references may be retained, but no new inactive references introduced; every inactive member's proposed financial delta must be zero. This permits description/date corrections without forcing rejoin. Recorded payments currently have no correction UI or reversal writer. A full append-only SettlementReversal followed by a correct new payment is the proposed remedy, requiring separate approval. Closed periods remain deferred.
 
 ## A4.4 Stored or calculated balances
 
@@ -55,9 +55,15 @@ Settlement recording does not establish that a transfer happened or the recipien
 - Up to 100 active group members; no recurring expenses. Phase 5 includes the explicitly approved bounded exact settlement optimizer; unbounded optimization remains excluded.
 - A bounded full-settlement reversal is the proposed corrective workflow for future approval, not an implemented Phase 5 feature. No separate Balance or ExpenseRevision entity is needed.
 - READ COMMITTED + consistent group-row lock for writes; short REPEATABLE READ snapshots for multi-query ledger reads.
-- Non-owner runtime credentials enforce append-only grants on Activity, Settlement and SettlementReversal; migrations/fixture cleanup use separate credentials.
+- Non-owner runtime credentials enforce append-only grants on the implemented Activity and Settlement tables; migrations/fixture cleanup use separate credentials. SettlementReversal is a proposal, not an applied table.
 - Test, dev and migrate-dev shadow databases are distinct; real committed test fixtures are required for auth/concurrency testing.
 - Admin-controlled invitation issuance; hashed tokens, seven-day expiry, explicit rotation/revocation.
 - Group deletion is a soft delete with invite revocation; normal group access disappears while audit history is retained.
-- SQL DATE for expense date; UTC timestamps for creation/activity. UI renders user-local activity time.
+- SQL DATE for expense date; UTC timestamps for creation/activity. UI renders activity/settlement timestamps in Asia/Dhaka, explicitly labelled.
 - Candidate must review AI_LOG.md and write/revise their personal responses; do not fabricate personal authorship.
+
+## Quality review and demo policy
+
+The quality review adds no product feature or dependency upgrade. A measured PostgreSQL query-count regression verifies constant domain SELECT counts for 1 versus 25 expenses and 1 versus 8 groups; this is not a 5,000-expense load benchmark. Full-ledger reads and duplicate layout/page reads remain potential measured optimizations. Development-tool advisories and the pg deprecation are retained as disclosed limits rather than hidden by disabling checks or applying unsupported major upgrades.
+
+The demo helper is a guarded local CLI, not a mutation endpoint. It creates four fictional users through Better Auth, resolves actual sessions for feature services, and seeds two groups covering all split types, original/edit history, partial and full settlements. Generated passwords remain in ignored local storage, never this document. Re-runs authenticate the same accounts and reuse expense/payment request keys; they do not reset data. Independent human authorship and Part C review cannot be verified by a test suite. The candidate's statement that they wrote most of the project is recorded as a self-report in AI_LOG.md, without inventing a specific independently written component.

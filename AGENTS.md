@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # FairShare project rules
 
-The latest user approved Phase 7 only: Dashboard and User Interface. Build responsive accessible connected screens using existing authorized services. Display server-calculated allocations, balances and payment plans; no frontend split/accounting engines. Keep destructive confirmations, loading/error/success/empty states, currency formatting and permission boundaries. Work on the existing branch, test critical behavior before meaningful local commits, report actual results and wait for explicit approval. Publication and later workflows remain outside this phase.
+The user approved final documentation cleanup and a final commit after the Git audit. Confirm README.md, .env.example, DECISIONS.md, AI_LOG.md and ANSWERS.md are tracked and meaningful; keep setup/seed/demo-login instructions consistent and factual. Apply the proposed latest-unpushed-documentation-only amendment with message `docs: update project documentation`, including the prepared workflow updates. Preserve all working code and verified changes; do not delete commits, reset branches, rewrite published history or force-push. Do not create empty or repetitive documentation commits. Candidate-only submission requirements remain pending. This final-commit request does not authorize publishing the previously unpushed phases, a new product phase, deployment or assessment submission.
 
 ## Approval workflow
 
@@ -19,7 +19,10 @@ The latest user approved Phase 7 only: Dashboard and User Interface. Build respo
 - Do not implement/refactor, install dependencies, apply a Prisma migration, publish, or start the next phase until the user approves that phase.
 - After each approved phase, run TypeScript, ESLint and relevant tests; review security implications and the diff; report changes, evidence, limitations and next phase; then wait for approval.
 - Preserve existing source/data. The existing Drizzle/Route Handler build predates the master instructions; it is a reference baseline, not evidence that Prisma/Server Actions have already been implemented.
-- Make small, meaningful commits after checks. Never commit secrets, environment files, local database contents or tokens. Do not fabricate a historical commit sequence.
+- For each approved development phase: complete the work, run its required tests, review changed files, show a short natural Conventional Commit message, and wait for explicit approval before creating one meaningful commit. After approval, commit and push the verified phase on the existing branch; require separate approval before starting the next phase.
+- Include relevant documentation with the phase commit. Avoid separate repetitive verification/publication documentation commits. Do not create empty commits.
+- Preserve existing history. Do not delete commits, reset branches, rewrite published history or force-push without explicit authorization; force-push is prohibited by the current request. Only the latest unpushed commit is eligible for an approved amendment. Earlier local commits also require explicit approval before any history cleanup.
+- Never commit secrets, environment files, local database contents or tokens. Do not fabricate a historical commit sequence. Existing historical commits do not become approved for amendment or publication merely because the new workflow is recorded.
 
 ## Implementation invariants (for approved phases)
 

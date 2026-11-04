@@ -1,0 +1,15 @@
+# Part C — candidate review draft
+
+These answers were drafted with Codex during the quality review. They describe proposed investigation/design approaches, not claimed past personal experiences. The assessment asks for the candidate's own words. **The candidate must review, understand and rewrite/approve them before submission; that review is NOT VERIFIED.** No elapsed effort, employer experience or independently written component is invented here.
+
+## C1. A user disputes ৳12,000 and expects ৳2,000
+
+I would first acknowledge the discrepancy and ask which group, date range and expenses the user believes are wrong. I would preserve the current records, then reconstruct the balance from saved payer credits, participant allocations and completed settlements. I would check excluded members, currency units, duplicate payment claims, recent edits and deleted expenses, using activity snapshots to explain changes over time. The zero-sum check helps detect corruption, but cannot prove that a receipt or recorded payment is truthful. I would compare the ledger with the user's receipts privately, reproduce any calculation defect in a regression test, and explain the correction without silently rewriting history. To rebuild trust, I would show a readable before-and-after breakdown and agree the remaining amount with the user.
+
+## C2. NPR and USD expenses for a Nepal trip
+
+Before coding, I would ask whether the group wants separate currency balances or one reporting currency, and which currencies people will actually settle in. I would clarify who supplies exchange rates, which date applies, whether rates can change after an expense is saved, and how bank fees and cash conversions should be treated. Different currencies have different minor-unit rules, so the current BDT-only poisha model cannot simply attach a currency label. I would store original amounts, the chosen rate and any converted allocation as explicit historical facts using exact representations. I would also explain rounding differences, provider outages and disagreement over rates. I would start with an agreed conversion policy and reconciliation examples before choosing an API or promising automatic conversions.
+
+## C3. Forty members and 5,000 expenses take six seconds
+
+I would measure the request before changing the algorithm: session lookup, authorization, database execution, rows transferred, balance calculation and rendering. I would inspect query counts and representative EXPLAIN ANALYZE plans for missing group indexes, repeated relation queries and unnecessary columns. The current reader batches groups and relations, but still loads the complete ledger; eliminating N+1 queries does not eliminate data volume. I would benchmark a representative 5,000-expense fixture, paginate presentation separately from accounting, and consider exact database aggregation where it reduces transfer. If measurements justify caching or an incremental balance projection, I would specify invalidation for edits, deletions and settlements first. I would retain full-ledger reconciliation and zero-sum checks, then compare correctness and latency before and after the change.

@@ -1,4 +1,4 @@
-# FairShare — Phase 7
+# FairShare
 
 Authentication, groups/authorization, four expense split methods, persisted balances, settlement suggestions/recording and protected activity history. Money uses BigInt poisha. Suggestions do not change balances; recorded settlements do. Expense edits/deletion retain immutable old/new snapshots. Phase 7 adds focused, responsive financial screens and a connected dashboard. Reversals remain unimplemented. The reference build remains at `reference/pre-phase1/` and checkpoint `519735d`; its database was not reset or imported.
 
@@ -43,6 +43,21 @@ Copy `.env.example` to `.env.local` and supply real, separately provisioned URLs
 
 Migration commands use Prisma `migrate deploy`; they do not reset a database. Five migrations cover auth, groups, expenses, settlement storage and settlement audit events. Runtime settlement privileges are SELECT/INSERT only; UPDATE/DELETE/TRUNCATE remain revoked. Reversals in `prisma/schema.proposal.prisma` remain an inactive reference; do not replace the applied schema with that file.
 
+## Local demo seed and actual logins
+
+After setup and migrations, run:
+
+```sh
+npm run db:seed:demo -- --local
+npm run dev
+```
+
+This creates real Better Auth accounts with generated passwords for four fictional people: Ayesha, Rafi, Nusrat and Hasan. **Actual generated email/password pairs are in ignored `.local/demo-credentials.json`**; open that file locally to sign in at the exact `BETTER_AUTH_URL`. These are working locally provisioned accounts, not invented default credentials. No plaintext password is committed. A fresh clone generates its own credentials; there is no shared public demo login or deployed URL.
+
+The helper seeds two groups, five expenses across all four methods, an edit preserving original values, and four completed payments across bKash/Cash/Bank labels. One group has outstanding balances after partial settlements; the other is fully settled. `.local/demo-verification.json` records actual server-calculated balances and zero sums. Re-run the seed to verify/reuse records; it does not wipe or reset groups, rotate credentials or remove user data. An interrupted provisioning step may leave partial demo data; preserve the manifest and rerun instead of deleting it. Concurrent seed runs are not supported.
+
+Safety guards require explicit `--local`, non-production mode, the documented loopback `fairshare_phase1` database on port 55432 and loopback HTTP origin on port 3000. Test/prod identity matches are rejected. Hosted/public demo provisioning is not authorized by this command. Never commit or publish `.local/`, passwords, cookies or database files. Review local file permissions when sharing a computer.
+
 ## Authentication and routes
 
 - `/signup` and `/login`: RHF/Zod forms call Server Actions, which validate input again and invoke Better Auth.
@@ -65,7 +80,7 @@ Removal checks the complete persisted ledger under the group write lock and requ
 
 ## Expenses and exact splits
 
-Group pages list expenses in pages of 25, show saved allocations and provide add/edit/delete dialogs with live previews. Members may add expenses; the original creator and group admin may edit/delete. Every server operation independently authenticates and checks group membership. An active group payer may be excluded from participants.
+The dedicated expense list uses pages of 25 and shows saved allocations. Add/edit screens request explicit server previews; deletion uses a confirmation dialog. Members may add expenses; the original creator and group admin may edit/delete. Every server operation independently authenticates and checks group membership. An active group payer may be excluded from participants.
 
 Enter BDT as digit strings with at most two decimal places. The server parses them into integer poisha; totals must be ৳0.01–৳1,000,000.00. Exact inputs must sum to the total. Percentages use basis points (50.25% = 5025; total 10000). Share weights are positive integers up to 1,000,000. Largest remainders receive extra poisha; equal remainders use sorted member IDs and a stable expense-ID rotation. New-expense previews disclose that tied recipients can differ by one poisha when saved; edits preserve the ID.
 
@@ -107,7 +122,19 @@ New snapshots use metadata schema version 2 and explicit per-action allowlists. 
 
 ## Demo accounts
 
-Local browser demonstrations use `rafi.phase1@example.test` / `FairSharePhase1!2026` (admin of The Dhanmondi flat) and `nusrat.phase2@example.test` / `FairSharePhase2!2026` (member). These are public local demonstration credentials, not production secrets. They are not seeded on a fresh install; use `/signup` to create an account and a group. The old rafi@fairshare.demo account belongs to the archived reference database.
+Use the four accounts created by `npm run db:seed:demo -- --local`, described in [Local demo seed and actual logins](#local-demo-seed-and-actual-logins). Ayesha is the admin of both demo groups; Rafi, Nusrat and Hasan are members. Open `.local/demo-credentials.json` locally for the actual generated email/password pairs, then sign in at `http://127.0.0.1:3000/login` using the configured local origin. Passwords are generated for your installation and are not committed. Earlier phase-specific browser accounts and archived-reference accounts are not the supported seed logins.
+
+## Assessment documentation
+
+| File | Contents |
+| --- | --- |
+| [README.md](README.md) | Setup, environment configuration, migrations, seed scenarios, actual demo-login instructions, tests and deployment procedure |
+| [.env.example](.env.example) | Explicit nonworking configuration placeholders; no real credentials |
+| [DECISIONS.md](DECISIONS.md) | Architecture choices and all six A4 answers |
+| [AI_LOG.md](AI_LOG.md) | Actual AI tools/work, mistakes, exact prompts and candidate disclosure boundaries |
+| [ANSWERS.md](ANSWERS.md) | All three Part C answers, labelled as AI-assisted drafts pending candidate review |
+
+The latest quality results and remaining submission requirements are in [the requirement checklist](docs/QUALITY_REVIEW.md). Candidate review, the screen recording and submission are separate from committing these files.
 
 ## Checks
 
@@ -136,9 +163,23 @@ npm start
 
 Webpack is explicitly selected because this sandbox blocked Turbopack junction creation. System fonts keep builds independent of external font downloads.
 
+## Deployment procedure (not executed)
+
+1. Provision a supported PostgreSQL database, separate migration owner and restricted application role; require provider-appropriate TLS verification. Keep production credentials separate from local/test URLs and do not use the local seed helper against it.
+2. Configure server-only `DATABASE_URL`, migration-owner `DIRECT_URL`, a new random `BETTER_AUTH_SECRET` and the exact HTTPS `BETTER_AUTH_URL` in the host's secret settings. Supply owner credentials only to the migration task where possible. No `NEXT_PUBLIC_` secret is needed.
+3. Install with `npm ci`, run `npm run db:generate`, apply the reviewed migration chain with `npm run db:migrate`, and verify the runtime table grants. The current grant helper uses documented fixed role names; a host assigning different roles needs an explicitly reviewed adaptation before use.
+4. Build with `npm run build`, serve with `npm start`, and repeat signin/session/permission/ledger smoke checks against a deployment-specific test account. Configure HTTPS, backups, monitoring, log redaction and shared abuse protection before exposing it publicly.
+5. Keep test and shadow databases isolated. Review migration status, rollback/restore procedures and dependency advisories rather than running reset or automatic major-version audit fixes.
+
+No deployment was performed or verified, and no live URL is claimed. The repository is public, but the latest local commits have not been pushed. A public repository alone does not satisfy a deployed-demo bonus.
+
+## Current quality gate
+
+The full requirement-by-requirement checklist, actual test results, findings and unverified items are in [QUALITY_REVIEW.md](docs/QUALITY_REVIEW.md). Latest verified checks: **110 unit tests, 138 PostgreSQL integration tests**, TypeScript, zero-warning ESLint, production build and five clean-schema migrations pass. Part C has three approximately 120-word [AI-assisted drafts](ANSWERS.md) requiring candidate review. [AI_LOG.md](AI_LOG.md) distinguishes observed AI changes, exact prompts and the candidate's authorship self-report; no specific independently written component has been confirmed. The assessment is **not declared complete**: candidate-only review/disclosure and the required <=5-minute screen recording/submission are still outstanding.
+
 ## Phase boundary and known limits
 
-Phases through the dashboard and connected interface are implemented. Reversals and further work await approval. All work uses the existing [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth) branch. Phases 1–4 are pushed; Phases 5–7 are verified and committed locally, awaiting review before publication. No deployment or assessment submission has occurred. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; all checks pass, and pg 9 requires compatibility review.
+Phases through the dashboard and connected interface are implemented. Reversals and further work await approval. All work uses the existing [codex/phase-1-auth](https://github.com/zabirarkam27/fair-share/tree/codex/phase-1-auth) branch. Phases 1–4 are pushed; Phases 5–7 and the quality-review work remain local, awaiting review before publication. No deployment or assessment submission has occurred. Email verification, password recovery and distributed abuse protection remain unconfigured; this is not production-ready. Better Auth's in-memory HTTP limiter is not shared or claimed to cover direct Server Action calls. Current pg 8 emits the documented Prisma adapter deprecation warning; all checks pass, and pg 9 requires compatibility review.
 
 ESLint 9.39.5 is retained for the declared peer ranges of Next 16.4.5's lint plugins; npm marks that ESLint line unsupported. ESLint 10 executed locally but produced transitive peer conflicts, so it was not left as an unsupported combination. Revisit the lint toolchain together when Next's plugins support it. shadcn is development tooling, not a runtime dependency; its transitive audit advisories are reported in the phase report. Do not apply npm's suggested major downgrade blindly.
 

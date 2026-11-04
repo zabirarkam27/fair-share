@@ -1,4 +1,109 @@
-# Actual AI usage log (in progress)
+# Actual AI usage log
+
+## Final documentation cleanup after Git audit
+
+The user approved checking the five required assessment files, fixing the remaining documentation and making the final commit. Codex confirmed the files were already tracked, added a README file checklist, and replaced obsolete phase-specific demo-login guidance with the actual guarded seed workflow and generated local credential file. The earlier quality checks and actual demo results remain recorded below; they are not claimed as newly rerun application tests for this documentation-only amendment. Git rules/plan now require message approval before each future phase commit. Only the latest unpushed documentation commit is amended with the approved message `docs: update project documentation`; published commits and working application code are preserved. No credentials, independent-human-authorship evidence, candidate answer approval, deployment or submission is fabricated. No push is included in this final-commit request.
+
+## Quality review disclosure — candidate review required
+
+Setup observed in this conversation: Codex in the ChatGPT desktop app, PowerShell/Node tooling, Prisma/PostgreSQL, Better Auth, Vitest, TypeScript and ESLint. Codex used the installed framework source/docs, the PostgreSQL/Next.js/PDF skills, bundled PDF extraction, shell checks and prior browser verification. No subagent or new dependency was used in this review. Other tools the candidate may have used outside this conversation are not verified.
+
+The candidate's exact authorship statement during this review was: **“I wrote most of this, write something”.** This is recorded as a self-report. It does not identify which component was written independently or why. The AI-assisted implementation and fixes observed below remain disclosed; no unsupported percentage, personal effort, human discovery or independently authored file is inferred from that statement. For Part B.4 the candidate must supply the actual component and reason before submission. Codex has not filled that gap with an invented example.
+
+### Three observed AI mistakes and corrections
+
+1. Phase 3 initially attempted Prisma nested split writes with composite relations incorrectly. The recorded integration run had 19 expense failures and 38 passing tests. Codex changed this to explicit expense/split writes inside the same transaction; the actual subsequent full checks passed. This is an AI implementation correction, not a claim that the candidate personally found it.
+2. Phase 7's new HTTP denial tests assumed an immediate 404/custom boundary before Next.js finished streaming. The runtime returned 200 headers plus the framework's explicit not-found signal, without private data. Codex corrected the route-specific/streaming test assumptions while retaining absence-of-private-data and permission checks. Another pre-existing test still targeted the old payment screen location and was updated to the dedicated route. No security assertion was removed.
+3. During this review, Codex printed extracted PDF text through a CP1252 console and hit a UnicodeEncodeError. The UTF-8 extraction file had already been written. Codex read that file as UTF-8, verified the actual A4/Part C questions, and did not invent their contents or install unnecessary PDF dependencies.
+
+A separate actual execution failure occurred in this review: one Windows Vitest worker exited with 3221226505, so the first integration command failed after 108 tests with settlement coverage incomplete. A full retry passed 137; the expanded suite passed 138. Root cause is not verified and the crash is not described as fixed. The existing Prisma/pg deprecation warning remains visible.
+
+### Two exact real prompts
+
+The following prompts are copied from the user's messages in this conversation. They are selected here by Codex because they imposed useful constraints; the candidate must confirm their own selection of “best” prompts and reasoning.
+
+Prompt 1:
+
+```text
+Review your proposed FairShare architecture critically.
+
+Before implementation, verify:
+
+1. Better Auth compatibility with the selected Next.js and Prisma versions.
+2. PostgreSQL money representation and BigInt serialization.
+3. Group membership and authorization design.
+4. Expense and ExpenseSplit relationships.
+5. Historical activity preservation.
+6. Settlement accounting and balance sign conventions.
+7. Database transaction boundaries.
+8. Invite token security.
+9. Test database strategy.
+
+Identify any missing entities, unsafe assumptions, unnecessary complexity, or conflicting requirements.
+
+Do not implement anything yet.
+
+Revise the architecture and present:
+
+- Final database model relationships
+- Important indexes
+- Financial data representation
+- Server-side permission boundaries
+- Phase-by-phase implementation plan
+
+Wait for my explicit approval.
+```
+
+Codex's assessment: this prompt separated architecture review from implementation and made compatibility, exact money, authorization and test isolation explicit gates. It reduced the chance that an attractive UI would conceal an unsafe ledger design.
+
+Prompt 2:
+
+```text
+Implement Phase 6 only: Activity History and Audit Logging.
+
+Track:
+
+- Group creation.
+- Member joining.
+- Member removal.
+- Expense creation.
+- Expense editing.
+- Expense deletion.
+- Settlement recording.
+
+For every relevant event store:
+
+- Group ID.
+- Actor ID.
+- Action type.
+- Related resource ID.
+- Previous values when applicable.
+- New values when applicable.
+- Timestamp.
+
+Requirements:
+
+- Expense edits must preserve old and new values.
+- Expense deletion must not erase its activity history.
+- Members can only view activity for groups they belong to.
+- Activity logs must not be editable by ordinary users.
+- Create related records within the same database transaction where appropriate.
+- Avoid exposing sensitive information in activity metadata.
+
+Test old-value and new-value preservation after multiple expense edits.
+
+Wait for approval.
+```
+
+Codex's assessment: this prompt specified both retention behavior and the permission/transaction boundary, then demanded a multiple-edit test. The result could be verified as a snapshot chain rather than accepted from a single event screenshot.
+
+### Current review evidence
+
+Codex reviewed the active monetary, membership, expense, settlement, audit, authentication, migration and permission code. No critical application defect was identified in tested paths; product code, schema and pinned dependencies were left unchanged. Added the requested guarded local demo CLI and one real SQL query-budget regression. Completed documentation and clearly labelled approximately 120-word Part C drafts; these are not represented as the candidate's own reviewed words.
+
+Final observed checks: TypeScript, zero-warning ESLint, 110 unit tests, 138 PostgreSQL integration tests in eight files, production build, Prisma validation, all five empty-schema migrations and a no-difference read-only schema comparison. The query probe measured 8 domain SELECTs for 1 versus 25 expenses and 7 for 1 versus 8 groups, excluding separate auth-client queries. A value-based scan found no configured secret/password matches in 56 browser-build files or 187 tracked files. Full npm audit reported 19 moderate/2 low tooling entries and no high/critical; production-only audit reported zero. No major-version audit fix was applied.
+
+Actual local seed: four generated Better Auth users, two groups, five expenses, four completed settlements, an old/new dinner correction, all four split types and both outstanding/fully settled scenarios. Both group sums were exactly zero; a second run reused records and authenticated the same users. An HTTP smoke probe initially failed on the fourth rapid signin with Better Auth's built-in 429 limit (three signins/ten seconds). Codex spaced verification requests beyond that window without changing the limiter: all four actual accounts then authenticated, their identities matched and 12 protected pages returned successfully, followed by signout. Passwords/cookies were not printed or committed. Actual credentials are in ignored .local/demo-credentials.json. Missing-local-flag, production-mode and test-database seed guard probes rejected before writes. The app was restored locally on port 3000. Verified tooling/test commit: 398a7a0. No deployment, push, video recording, submission, candidate effort or deadline claim is made. See docs/QUALITY_REVIEW.md for PASS/FAIL/NOT IMPLEMENTED/NOT VERIFIED evidence and remaining gates.
 
 ## Latest evidence — Phase 7 after explicit approval
 
