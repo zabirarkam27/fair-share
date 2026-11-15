@@ -8,9 +8,21 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { CreateGroupButton } from "./create-group-button";
 import type { GroupSummary } from "./service";
-export function GroupList({ groups }: { groups: GroupSummary[] }) {
+export function GroupList({
+  groups,
+  query = "",
+}: {
+  groups: GroupSummary[];
+  query?: string;
+}) {
+  const matches = groups.filter((group) =>
+    group.name.toLowerCase().includes(query.toLowerCase()),
+  );
   return (
     <section className="mt-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -27,9 +39,40 @@ export function GroupList({ groups }: { groups: GroupSummary[] }) {
         </div>
         <CreateGroupButton />
       </div>
-      {groups.length ? (
+      <form
+        action="/dashboard/groups"
+        method="get"
+        role="search"
+        aria-label="Your groups"
+        className="mb-6"
+      >
+        <Label htmlFor="group-search">Search by group name</Label>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Input
+            id="group-search"
+            name="q"
+            type="search"
+            maxLength={80}
+            defaultValue={query}
+            placeholder="Find a group…"
+            className="min-w-0 flex-1 basis-48"
+          />
+          <Button type="submit">Search</Button>
+          {query && (
+            <Button asChild variant="outline">
+              <Link href="/dashboard/groups">Clear search</Link>
+            </Button>
+          )}
+        </div>
+      </form>
+      {query && (
+        <p role="status" className="mb-4 text-sm text-muted-foreground">
+          {matches.length} of {groups.length} groups match your search.
+        </p>
+      )}
+      {matches.length ? (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {groups.map((group) => (
+          {matches.map((group) => (
             <Link
               href={"/dashboard/groups/" + group.id}
               key={group.id}
@@ -73,10 +116,13 @@ export function GroupList({ groups }: { groups: GroupSummary[] }) {
               className="mx-auto mb-4 size-8 text-primary"
               strokeWidth={1.5}
             />
-            <h3 className="text-lg font-medium">Make room for your people.</h3>
+            <h3 className="text-lg font-medium">
+              {query ? "No matching groups." : "Make room for your people."}
+            </h3>
             <p className="mx-auto mt-3 max-w-sm text-sm leading-7 text-muted-foreground">
-              Create your first group or accept an invitation from a friend.
-              Your groups will appear here.
+              {query
+                ? "Try another group name or clear your search to see all your groups."
+                : "Create your first group or accept an invitation from a friend. Your groups will appear here."}
             </p>
           </CardContent>
         </Card>

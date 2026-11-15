@@ -4,8 +4,14 @@ import { groups } from "@/features/groups/server";
 import { GroupList } from "@/features/groups/group-list";
 import { PageHeading } from "@/components/shared/page-heading";
 import { Button } from "@/components/ui/button";
-export default async function GroupsPage() {
+export default async function GroupsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[] }>;
+}) {
   await requireSession();
+  const { q } = await searchParams;
+  const query = (Array.isArray(q) ? q[0] : q)?.trim().slice(0, 80) ?? "";
   const list = await groups.list();
   return (
     <>
@@ -19,7 +25,7 @@ export default async function GroupsPage() {
           </Button>
         }
       />
-      <GroupList groups={list} />
+      <GroupList groups={list} query={query} />
     </>
   );
 }

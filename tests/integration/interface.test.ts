@@ -125,6 +125,34 @@ describe("Phase 7 server-driven interface boundaries on isolated PostgreSQL", ()
     const { requestKey, ...data } = input(overrides);
     return { ...data, seed: requestKey };
   }
+  it("group search matches names without case sensitivity and never reveals private groups", async () => {
+    const headers = { Cookie: accounts[0].cookie };
+    const search = async (query: string) => {
+      const response = await fetch(
+        base + "/dashboard/groups?q=" + encodeURIComponent(query),
+        { headers },
+      );
+      expect(response.status).toBe(200);
+      return response.text();
+    };
+    const found = await search("  INTERFACE GROUP " + run + "  ");
+    expect(found).toContain(`href="/dashboard/groups/${groupId}"`);
+    expect(found).toContain("Clear search");
+    expect(found).not.toContain(`href="/dashboard/groups/${otherId}"`);
+    const privateResult = await search("Private interface " + run);
+    expect(privateResult).toContain("No matching groups.");
+    expect(privateResult).not.toContain(`href="/dashboard/groups/${otherId}"`);
+    const missing = await search("no-such-group-" + run);
+    expect(missing).toContain("No matching groups.");
+    expect(missing).not.toContain(`href="/dashboard/groups/${groupId}"`);
+    const cleared = await search("   ");
+    expect(cleared).toContain(`href="/dashboard/groups/${groupId}"`);
+    const anonymous = await fetch(base + "/dashboard/groups?q=private", {
+      redirect: "manual",
+    });
+    expect([303, 307]).toContain(anonymous.status);
+    expect(anonymous.headers.get("location")).toContain("/login");
+  });
   it.each(["EQUAL", "EXACT", "PERCENTAGE", "SHARES"] as const)(
     "%s preview returns serialized conserved server allocations without writing records",
     async (method) => {

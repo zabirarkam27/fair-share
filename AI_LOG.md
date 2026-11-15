@@ -1,5 +1,11 @@
 # Actual AI usage log
 
+## Group-name search — 15 November 2026 (Asia/Dhaka)
+
+The user requested adding a feature and pushing it to Git. Codex selected group-name search: an accessible GET form on Your groups, case-insensitive server filtering over the existing authorized list, URL query persistence, matching count, Clear search and a no-results state. No dependency, schema, ledger or permission-model change was introduced. The local Next.js page/searchParams documentation and React review skill informed the implementation. A new real PostgreSQL/HTTP integration regression covers matching with whitespace/case changes, missing results, clearing, private-group isolation and anonymous redirects.
+
+Actual verification: production build, TypeScript, zero-warning ESLint, 110 unit tests and all 139 isolated PostgreSQL integration tests passed. The first check attempt incorrectly ran type generation concurrently with a build that replaced generated files, causing missing-file errors; the build also hit sandbox EPERM. Codex reran the build with approved execution permissions and then TypeScript sequentially; both passed without suppressing checks. The existing Prisma/pg deprecation warning remains. Existing next-env.d.ts and .vscode user changes are excluded from the feature commit. No new live browser verification is claimed.
+
 ## Public hosted demo access — 5 November 2026 (Asia/Dhaka)
 
 The user explicitly requested professional admin/user1/user2/user3 demo email identifiers, a simple password, a prominent README credentials table and live link, then commit and push. Codex created four new Better Auth accounts with fictional `@fairshare.example` identifiers, preserving existing accounts and records. An ignored, host-allowlisted helper reused the existing group/expense/settlement services to provision two demo groups, five expenses and four fictional completed settlements. Both groups verified exact zero-sum balances; the settled group has all-zero member balances. No real funds were moved. Only the intentionally public demo password is disclosed in README; private credentials, cookies, database URLs and auth secrets remain excluded from Git.

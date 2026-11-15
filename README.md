@@ -123,6 +123,8 @@ The protected dashboard shows server-calculated owed/receivable totals, individu
 
 Inside `/dashboard/groups/[groupId]`, shared navigation connects the overview, expenses, balances, settlement suggestions, completed payment history, activity and settings. Expenses have dedicated list, add, detail and edit routes. Settings exposes the existing invitations, membership removal and confirmed deletion features; no unsupported rename/transfer/reversal controls are shown.
 
+On Your groups, search by group name without case sensitivity. Search results show a matching count, an empty state when nothing matches and a Clear search link. The query stays in the URL for bookmarking. Filtering happens on the server after loading only the signed-in user's authorized groups; searching cannot reveal other users' private groups.
+
 Expense forms offer equal, exact BDT, percentage and weighted-share inputs. Preview split calls an independently authenticated server service with the same membership/financial validators as save. Editing previews also enforce creator/admin permissions and the current version. Preview never writes financial/audit records. No split, balance or payment-planning engine runs in the browser. New-expense previews may differ from final saved rounding ties by one poisha; the saved detail page is authoritative.
 
 Responsive layouts include labelled forms, keyboard focus, a mobile navigation sheet, pending/error/success/empty states and destructive confirmations. Wide balance tables and group navigation scroll inside their own containers. All currency uses the same BigInt-safe BDT formatter. See [Phase 7 verification](docs/PHASE_7_REPORT.md).
